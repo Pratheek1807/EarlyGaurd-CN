@@ -80,7 +80,6 @@ header {
 .btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(59,130,246,0.08); }
 .btn-accent { background: var(--accent); border-color: var(--accent); color: #fff; }
 .btn-accent:hover { background: var(--accent-d); border-color: var(--accent-d); color: #fff; }
-input[type=file]#csv-input { display: none; }
 
 /* ── Settings panel ──────────────────────────────────────────── */
 .settings-panel {
@@ -266,7 +265,7 @@ td.editable input {
 
 @media (max-width: 1200px) { .kpi-grid { grid-template-columns: repeat(3,1fr); } }
 @media (max-width: 900px)  { .charts-row,.two-col { grid-template-columns: 1fr; } .settings-inner { grid-template-columns: 1fr; } .kpi-grid { grid-template-columns: repeat(2,1fr); } }
-@media (max-width: 900px)  { #tab-signals .main > div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; } }
+
 
 /* ── Tab nav ─────────────────────────────────────────────────── */
 .tab-nav {
@@ -346,6 +345,12 @@ td.editable input {
 .file-pick input { display: none; }
 .file-pick svg { flex-shrink: 0; }
 .file-err { font-size: 10px; color: #9B1C1C; margin-top: 2px; line-height: 1.4; }
+.file-remove {
+  flex-shrink: 0; background: none; border: none; cursor: pointer; padding: 2px 6px;
+  border-radius: 4px; color: var(--muted); font-size: 14px; line-height: 1;
+  transition: color 0.15s, background 0.15s; align-items: center;
+}
+.file-remove:hover { color: #DC2626; background: rgba(220,38,38,0.09); }
 .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
 /* ── Progress overlay ────────────────────────────────────────── */
@@ -387,11 +392,6 @@ td.editable input {
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
       Run Pipeline
     </button>
-    <label class="btn" for="csv-input">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      Load CSV
-    </label>
-    <input type="file" id="csv-input" accept=".csv">
   </div>
 </header>
 
@@ -420,197 +420,118 @@ td.editable input {
 
 <nav class="tab-nav">
   <button class="tab-btn active" onclick="switchTab('overview')">Overview</button>
-  <button class="tab-btn" onclick="switchTab('survival')">Survival Analysis</button>
   <button class="tab-btn" onclick="switchTab('validation')">Model Validation</button>
-  <button class="tab-btn" onclick="switchTab('signals')">Signal Intelligence</button>
-  <button class="tab-btn" onclick="switchTab('recommendations')">Recommendations</button>
 </nav>
 
 <div id="tab-overview" class="tab-pane active">
 <div class="main">
 
-  <div class="kpi-grid">
+  <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr)">
     <div class="kpi" style="--kpi-c:#3B82F6">
-      <div class="kpi-label">Total Accounts</div>
+      <div class="kpi-label">Total Portfolio</div>
       <div class="kpi-value" id="k-total">—</div>
+      <div class="kpi-sub">accounts scored</div>
     </div>
     <div class="kpi" style="--kpi-c:#EF4444">
-      <div class="kpi-label">Critical + High</div>
-      <div class="kpi-value" id="k-high" style="color:#9B1C1C">—</div>
-      <div class="kpi-sub" id="k-high-pct"></div>
+      <div class="kpi-label">At-Risk Flagged</div>
+      <div class="kpi-value" id="k-high" style="color:#FCA5A5">—</div>
+      <div class="kpi-sub" id="k-high-pct">Critical + High tier</div>
     </div>
     <div class="kpi" style="--kpi-c:#F97316">
-      <div class="kpi-label">Avg Risk Probability</div>
-      <div style="display:flex;gap:14px;align-items:baseline;margin-top:4px">
-        <div>
-          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">30d</div>
-          <div class="kpi-value" id="k-avg-prob" style="color:#9A3412;font-size:20px">—</div>
-        </div>
-        <div>
-          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">60d</div>
-          <div class="kpi-value" id="k-avg-prob-60" style="color:#A78BFA;font-size:20px">—</div>
-        </div>
+      <div class="kpi-label">Avg Risk Prob</div>
+      <div style="display:flex;gap:12px;align-items:baseline;margin-top:6px">
+        <div><div style="font-size:9px;color:var(--muted);margin-bottom:2px">30d</div><div class="kpi-value" id="k-avg-prob" style="color:#FDBA74;font-size:20px">—</div></div>
+        <div><div style="font-size:9px;color:var(--muted);margin-bottom:2px">60d</div><div class="kpi-value" id="k-avg-prob-60" style="color:#A78BFA;font-size:20px">—</div></div>
       </div>
     </div>
     <div class="kpi" style="--kpi-c:#22C55E">
-      <div class="kpi-label">Total Net Benefit</div>
-      <div class="kpi-value" id="k-net-benefit" style="color:#14532D">—</div>
+      <div class="kpi-label">Accounts Saved</div>
+      <div class="kpi-value" id="k-worth" style="color:#86EFAC">—</div>
+      <div class="kpi-sub">40% early response rate</div>
     </div>
     <div class="kpi" style="--kpi-c:#22C55E">
-      <div class="kpi-label">Intervention ROI</div>
-      <div class="kpi-value" id="k-roi" style="color:#14532D">—</div>
-    </div>
-    <div class="kpi" style="--kpi-c:#22C55E">
-      <div class="kpi-label">Est. Accounts Saved</div>
-      <div class="kpi-value" id="k-worth" style="color:#14532D">—</div>
-      <div class="kpi-sub">40% conversion assumption</div>
+      <div class="kpi-label">Loan Amount Protected</div>
+      <div class="kpi-value" id="k-loan-protected" style="color:#86EFAC">—</div>
+      <div class="kpi-sub">@ ₹1L per account</div>
     </div>
   </div>
 
-  <!-- ── Early Warning ROI Panel ── -->
-  <div class="card full-col" style="margin-bottom:12px;border-color:rgba(59,130,246,0.3)">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-      <div class="card-title" style="margin-bottom:0"><span class="card-title-bar" style="background:#3B82F6"></span>Early Warning ROI — Cost Model</div>
-      <div style="font-size:10px;color:var(--muted);background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.2);border-radius:6px;padding:4px 10px;line-height:1.5">
-        <strong style="color:#713F12">Illustrative assumptions (mock data):</strong> 40% conversion rate · Early intervention = SMS ₹0.50 + Call ₹1.00 = <strong style="color:#713F12">₹1.50/account</strong> · Default recovery = SMS ₹0.50 + Call ₹1.00 + Agent visit ₹10.00 = <strong style="color:#9B1C1C">₹11.50/account</strong>
+  <!-- ── Merged EarlyGuard Business Case ── -->
+  <div class="card full-col" style="margin-bottom:12px;border-color:rgba(59,130,246,0.25)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <div class="card-title" style="margin-bottom:0"><span class="card-title-bar" style="background:#3B82F6"></span>Why EarlyGuard — Business Case</div>
+      <div style="font-size:10px;color:var(--muted);background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:6px;padding:4px 12px;line-height:1.6">
+        Assumptions (mock data) · ₹1L loan/account · 50% baseline default rate · 40% recovery with early contact · Ops: ₹1.50 early vs ₹101.50 post-default
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px">
-      <div style="background:var(--s2);border-radius:9px;padding:14px;border:1px solid var(--border2);text-align:center">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Accounts Flagged</div>
-        <div style="font-size:24px;font-weight:800;color:var(--text)" id="roi-flagged">—</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:3px">High + Critical tier</div>
-      </div>
-      <div style="background:var(--s2);border-radius:9px;padding:14px;border:1px solid rgba(34,197,94,0.25);text-align:center">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Est. Responded</div>
-        <div style="font-size:24px;font-weight:800;color:#14532D" id="roi-converted">—</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:3px">40% paid after contact</div>
-      </div>
-      <div style="background:var(--s2);border-radius:9px;padding:14px;border:1px solid rgba(59,130,246,0.2);text-align:center">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Intervention Cost</div>
-        <div style="font-size:24px;font-weight:800;color:#1E3A8A" id="roi-int-cost">—</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:3px">₹1.50 × all flagged</div>
-      </div>
-      <div style="background:var(--s2);border-radius:9px;padding:14px;border:1px solid rgba(239,68,68,0.2);text-align:center">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Avoided Default Cost</div>
-        <div style="font-size:24px;font-weight:800;color:#9B1C1C" id="roi-avoided">—</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:3px">₹11.50 × responded</div>
-      </div>
-      <div style="background:rgba(34,197,94,0.07);border-radius:9px;padding:14px;border:1px solid rgba(34,197,94,0.3);text-align:center">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Ops Cost ROI</div>
-        <div style="font-size:24px;font-weight:800;color:#14532D" id="roi-pct">—</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:3px">on recovery ops spend</div>
-      </div>
-    </div>
-    <!-- Cost breakdown visual -->
-    <div style="display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:10px;align-items:center">
-      <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:8px;padding:12px 14px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#1E3A8A;margin-bottom:8px">Early Intervention (per account)</div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--muted)">SMS alert</span><span style="color:var(--text);font-weight:600">₹0.50</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px"><span style="color:var(--muted)">Collections call</span><span style="color:var(--text);font-weight:600">₹1.00</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;border-top:1px solid var(--border);padding-top:6px"><span style="color:#1E3A8A">Total</span><span style="color:#1E3A8A">₹1.50</span></div>
-      </div>
-      <div style="text-align:center;color:var(--muted);font-size:22px">vs</div>
-      <div style="background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:12px 14px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#9B1C1C;margin-bottom:8px">Default Recovery (per account)</div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--muted)">SMS alert</span><span style="color:var(--text);font-weight:600">₹0.50</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--muted)">Collections call</span><span style="color:var(--text);font-weight:600">₹1.00</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px"><span style="color:var(--muted)">Field agent visit</span><span style="color:#9B1C1C;font-weight:600">₹10.00</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;border-top:1px solid var(--border);padding-top:6px"><span style="color:#9B1C1C">Total</span><span style="color:#9B1C1C">₹11.50</span></div>
-      </div>
-      <div style="text-align:center;color:#14532D;font-size:22px">=</div>
-      <div style="background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.2);border-radius:8px;padding:12px 14px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#14532D;margin-bottom:8px">You Save Per Converted Account</div>
-        <div style="font-size:28px;font-weight:800;color:#14532D;text-align:center;margin:6px 0">₹10.00</div>
-        <div style="font-size:10px;color:var(--muted);text-align:center">× <span id="roi-converted-inline">—</span> accounts = <strong id="roi-ops-saved" style="color:#14532D">—</strong> ops cost saved</div>
-        <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:6px">+ <strong id="roi-portfolio" style="color:#1E3A8A">—</strong> portfolio protected</div>
-      </div>
-    </div>
-  </div>
 
-  <!-- ── Loan Amount ROI Panel ── -->
-  <div class="card full-col" style="margin-bottom:12px;border-color:rgba(34,197,94,0.3)">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-      <div class="card-title" style="margin-bottom:0"><span class="card-title-bar" style="background:#22C55E"></span>Loan Portfolio ROI — What Early Warning Actually Saves</div>
-      <div style="font-size:10px;color:var(--muted);background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.25);border-radius:6px;padding:4px 10px;line-height:1.5">
-        <strong style="color:#14532D">Illustrative assumptions (mock data):</strong> Standard loan amount ₹1,00,000/account · Without early warning 50% of flagged accounts default · With early warning 40% pay after contact and avoid collection
-      </div>
-    </div>
-    <!-- Story row -->
-    <div style="display:grid;grid-template-columns:1fr 40px 1fr 40px 1fr;gap:8px;align-items:center;margin-bottom:16px">
+    <!-- 3-column story -->
+    <div style="display:grid;grid-template-columns:1fr 56px 1fr 56px 1fr;gap:0;align-items:stretch;margin-bottom:14px">
 
-      <!-- Without early warning -->
-      <div style="background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.25);border-radius:9px;padding:14px 16px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#9B1C1C;margin-bottom:10px">Without Early Warning</div>
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:6px">
-          <span style="color:var(--muted)">Accounts flagged</span>
-          <span style="font-weight:700;color:var(--text)" id="loan-roi-flagged">—</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:6px">
-          <span style="color:var(--muted)">Assumed bad rate</span>
-          <span style="font-weight:700;color:#9B1C1C">50%</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:10px">
-          <span style="color:var(--muted)">Accounts going bad</span>
-          <span style="font-weight:700;color:#9B1C1C" id="loan-roi-bad">—</span>
-        </div>
-        <div style="border-top:1px solid rgba(239,68,68,0.2);padding-top:10px">
-          <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Loan amount at risk</div>
-          <div style="font-size:22px;font-weight:800;color:#9B1C1C" id="loan-roi-atrisk">—</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:2px">@ ₹1L standard per account</div>
+      <!-- WITHOUT -->
+      <div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.22);border-radius:10px;padding:16px 18px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#FCA5A5;margin-bottom:12px">❌ Without EarlyGuard</div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:7px"><span style="color:var(--muted)">At-risk accounts</span><span style="font-weight:700;color:var(--text)" id="bc-flagged">—</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:7px"><span style="color:var(--muted)">Baseline default rate</span><span style="font-weight:700;color:#FCA5A5">50%</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:7px"><span style="color:var(--muted)">Accounts defaulting</span><span style="font-weight:700;color:#FCA5A5" id="bc-bad-count">—</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:12px"><span style="color:var(--muted)">Ops cost (₹101.50 each)</span><span style="font-weight:700;color:#FCA5A5" id="bc-ops-without">—</span></div>
+        <div style="border-top:1px solid rgba(239,68,68,0.2);padding-top:12px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Loan amount lost</div>
+          <div style="font-size:26px;font-weight:800;color:#EF4444;line-height:1" id="bc-loan-lost">—</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px">50% × accounts × ₹1L</div>
         </div>
       </div>
 
-      <div style="text-align:center;font-size:26px;color:var(--muted)">→</div>
+      <!-- Arrow -->
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--muted)">
+        <div style="font-size:22px">→</div>
+        <div style="font-size:9px;text-align:center;line-height:1.4;max-width:42px;color:var(--muted)">Early signal</div>
+      </div>
 
-      <!-- With early warning -->
-      <div style="background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.25);border-radius:9px;padding:14px 16px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#14532D;margin-bottom:10px">With Early Warning</div>
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:6px">
-          <span style="color:var(--muted)">Accounts flagged</span>
-          <span style="font-weight:700;color:var(--text)" id="loan-roi-flagged2">—</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:6px">
-          <span style="color:var(--muted)">Response rate</span>
-          <span style="font-weight:700;color:#14532D">40%</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:10px">
-          <span style="color:var(--muted)">Accounts paid, avoided collection</span>
-          <span style="font-weight:700;color:#14532D" id="loan-roi-saved-count">—</span>
-        </div>
-        <div style="border-top:1px solid rgba(34,197,94,0.2);padding-top:10px">
-          <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Loan amount protected</div>
-          <div style="font-size:22px;font-weight:800;color:#14532D" id="loan-roi-protected">—</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:2px">not going into collection</div>
+      <!-- WITH -->
+      <div style="background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.22);border-radius:10px;padding:16px 18px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#86EFAC;margin-bottom:12px">✅ With EarlyGuard</div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:7px"><span style="color:var(--muted)">At-risk accounts</span><span style="font-weight:700;color:var(--text)" id="bc-flagged2">—</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:7px"><span style="color:var(--muted)">Early response rate</span><span style="font-weight:700;color:#86EFAC">40%</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:7px"><span style="color:var(--muted)">Accounts recovered</span><span style="font-weight:700;color:#86EFAC" id="bc-saved-count">—</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:12px"><span style="color:var(--muted)">Ops cost (₹1.50 early)</span><span style="font-weight:700;color:#86EFAC" id="bc-ops-with">—</span></div>
+        <div style="border-top:1px solid rgba(34,197,94,0.2);padding-top:12px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Loan amount protected</div>
+          <div style="font-size:26px;font-weight:800;color:#22C55E;line-height:1" id="bc-loan-saved">—</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px">40% × accounts × ₹1L</div>
         </div>
       </div>
 
-      <div style="text-align:center;font-size:26px;color:#14532D">=</div>
+      <!-- Equals -->
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
+        <div style="font-size:22px;color:#86EFAC">=</div>
+      </div>
 
-      <!-- ROI summary -->
-      <div style="background:rgba(34,197,94,0.10);border:2px solid rgba(34,197,94,0.35);border-radius:9px;padding:14px 16px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#14532D;margin-bottom:12px">Loan Portfolio ROI</div>
-        <div style="text-align:center;margin-bottom:10px">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Loan amount saved by early action</div>
-          <div style="font-size:30px;font-weight:800;color:#14532D;line-height:1" id="loan-roi-saved-amount">—</div>
+      <!-- NET BENEFIT -->
+      <div style="background:linear-gradient(135deg,rgba(34,197,94,0.1),rgba(59,130,246,0.08));border:2px solid rgba(34,197,94,0.35);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;justify-content:center">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#86EFAC;margin-bottom:14px">Net Benefit of EarlyGuard</div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Loan portfolio protected</div>
+          <div style="font-size:28px;font-weight:800;color:#22C55E;line-height:1" id="bc-net-loan">—</div>
         </div>
-        <div style="border-top:1px solid rgba(34,197,94,0.25);padding-top:10px;text-align:center">
-          <div style="font-size:10px;color:var(--muted);margin-bottom:3px">ROI on loan amount at risk</div>
-          <div style="font-size:28px;font-weight:800;color:#14532D" id="loan-roi-pct">—</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:3px">of at-risk portfolio protected</div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Ops cost saved</div>
+          <div style="font-size:20px;font-weight:700;color:#86EFAC" id="bc-ops-saved">—</div>
         </div>
-        <div style="margin-top:10px;font-size:10px;color:var(--muted);background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.15);border-radius:6px;padding:6px 8px;line-height:1.5">
-          Some operational cost applies, shown separately in the Cost Model above.
+        <div style="border-top:1px solid rgba(34,197,94,0.25);padding-top:10px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Total ROI on at-risk portfolio</div>
+          <div style="font-size:32px;font-weight:800;color:#22C55E;letter-spacing:-1px" id="bc-roi-pct">—</div>
         </div>
       </div>
     </div>
 
-    <!-- Example walkthrough for 10 accounts -->
-    <div style="background:var(--s2);border:1px solid var(--border2);border-radius:8px;padding:12px 16px;font-size:11px;color:var(--muted);line-height:1.8">
-      <strong style="color:var(--text)">How to read this (10-account example):</strong>
-      &nbsp;10 accounts flagged as high-risk → without early warning, 5 would default (50%) → <span style="color:#9B1C1C;font-weight:600">₹5L lost</span>.
-      With early warning: 4 of the 10 respond and pay (40%) → those 4 do not go to collection → <span style="color:#14532D;font-weight:600">₹4L loan amount protected</span>.
-      Some ops cost (SMS + call ≈ ₹1.50/account) applies but is minimal vs. the loan amount saved.
+    <!-- 10-account walkthrough -->
+    <div style="background:var(--s2);border:1px solid var(--border2);border-radius:8px;padding:10px 16px;font-size:11px;color:var(--muted);line-height:1.8">
+      <strong style="color:var(--text)">10-account example:</strong>
+      10 flagged → <span style="color:#FCA5A5;font-weight:600">5 default without EarlyGuard (₹5L lost)</span> →
+      EarlyGuard sends early alert (₹1.50/account) → 4 pay up → only 1 defaults →
+      <span style="color:#86EFAC;font-weight:600">₹4L loan protected + ₹31.50 ops saved</span>.
+      Field agent visit (₹100) only needed for the 1 remaining defaulter, not all 5.
     </div>
   </div>
 
@@ -631,30 +552,18 @@ td.editable input {
       <div id="horizon-insight" style="font-size:11px;color:var(--muted);background:rgba(234,179,8,0.07);border:1px solid rgba(234,179,8,0.18);border-radius:6px;padding:7px 10px;line-height:1.5"></div>
     </div>
     <div class="card">
-      <div class="card-title"><span class="card-title-bar"></span>Probability Distribution — 30d vs 60d</div>
-      <div class="chart-wrap" style="height:190px"><canvas id="prob-hist"></canvas></div>
+      <div class="card-title"><span class="card-title-bar" style="background:#22C55E"></span>EarlyGuard Impact — With vs Without</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Accounts defaulting vs recovered across flagged portfolio</div>
+      <div class="chart-wrap" style="height:170px"><canvas id="impact-chart"></canvas></div>
       <div class="legend" style="margin-top:8px">
-        <span><i style="background:#F97316"></i>30d model</span>
-        <span><i style="background:#A78BFA"></i>60d model</span>
+        <span><i style="background:#EF4444"></i>Would default (no action)</span>
+        <span><i style="background:#22C55E"></i>Recovered (early warning)</span>
       </div>
-    </div>
-  </div>
-
-  <div class="full-col card" style="margin-bottom:12px">
-    <div class="card-title"><span class="card-title-bar"></span>Intervention Cost vs Expected Recovery by Tier</div>
-    <div class="chart-wrap" style="height:220px"><canvas id="waterfall"></canvas></div>
-    <div class="legend">
-      <span><i style="background:#60A5FA"></i>Intervention cost</span>
-      <span><i style="background:#F87171"></i>Expected recovery</span>
     </div>
   </div>
 
   <div class="full-col card">
     <div class="card-title"><span class="card-title-bar"></span>Top 20 Accounts by Net Benefit</div>
-    <div class="table-hint">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-      Click Outstanding, Intervention, or Recovery cells to edit — Net Benefit and KPIs update live.
-    </div>
     <div style="overflow-x:auto">
       <table>
         <thead><tr>
@@ -679,67 +588,7 @@ td.editable input {
 </div><!-- /.main -->
 </div><!-- /#tab-overview -->
 
-<!-- ═══════════════════════════════ SURVIVAL ANALYSIS ═══════════════════════════════ -->
-<div id="tab-survival" class="tab-pane">
-<div class="main">
 
-  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
-    <div class="kpi" style="--kpi-c:#3B82F6">
-      <div class="kpi-label">Total Accounts</div>
-      <div class="kpi-value" id="sv-total">—</div>
-    </div>
-    <div class="kpi" style="--kpi-c:#EF4444">
-      <div class="kpi-label">Total Events</div>
-      <div class="kpi-value" id="sv-events" style="color:#9B1C1C">—</div>
-      <div class="kpi-sub" id="sv-event-rate"></div>
-    </div>
-    <div class="kpi" style="--kpi-c:#3B82F6">
-      <div class="kpi-label">Cox C-index</div>
-      <div class="kpi-value" id="sv-concordance">—</div>
-    </div>
-    <div class="kpi" style="--kpi-c:#22C55E">
-      <div class="kpi-label">Log-rank p-value</div>
-      <div class="kpi-value" id="sv-pvalue" style="font-size:16px">—</div>
-      <div class="kpi-sub" id="sv-sig"></div>
-    </div>
-  </div>
-
-  <div class="full-col card">
-    <div class="card-title"><span class="card-title-bar"></span>Kaplan-Meier Survival Curves by Risk Tier</div>
-    <div class="chart-wrap" style="height:280px"><canvas id="km-chart"></canvas></div>
-    <div class="legend" id="km-legend"></div>
-  </div>
-
-  <div class="two-col">
-    <div class="card">
-      <div class="card-title"><span class="card-title-bar"></span>Tier Event Summary</div>
-      <table>
-        <thead><tr>
-          <th>Tier</th><th>N</th><th>Events</th><th>Default Rate</th><th>Median Survival</th>
-        </tr></thead>
-        <tbody id="sv-tier-tbody">
-          <tr><td colspan="5" class="empty">Loading survival data…</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="card">
-      <div class="card-title"><span class="card-title-bar"></span>Statistical Tests &amp; Cox PH Hazard Ratios</div>
-      <div id="sv-tests-content" style="color:var(--muted);font-size:12px">Loading…</div>
-    </div>
-  </div>
-
-  <div class="full-col card">
-    <div class="card-title"><span class="card-title-bar"></span>At-Risk Table</div>
-    <div style="overflow-x:auto">
-      <table>
-        <thead id="at-risk-head"></thead>
-        <tbody id="at-risk-body"></tbody>
-      </table>
-    </div>
-  </div>
-
-</div><!-- /.main -->
-</div><!-- /#tab-survival -->
 
 <!-- ═══════════════════════════════ MODEL VALIDATION ════════════════════════════════ -->
 <div id="tab-validation" class="tab-pane">
@@ -808,849 +657,6 @@ td.editable input {
 
 </div><!-- /.main -->
 </div><!-- /#tab-validation -->
-
-<!-- ═══════════════════════════════ SIGNAL INTELLIGENCE ════════════════════════════════ -->
-<div id="tab-signals" class="tab-pane">
-<div class="main">
-
-  <!-- ── Page header ── -->
-  <div style="margin-bottom:22px">
-    <div style="font-size:18px;font-weight:800;letter-spacing:-0.4px;margin-bottom:6px">Signal Intelligence</div>
-    <div style="font-size:13px;color:var(--muted);max-width:820px;line-height:1.6">
-      EarlyGuard reads <strong style="color:var(--text)">6 raw data sources</strong> and compresses months of history into
-      <strong style="color:var(--text)">10 composite signals</strong> (each 0–1, higher = more stressed).
-      Those 10 numbers pass through <strong style="color:var(--text)">3 independent ML models</strong>, whose outputs are blended by a
-      <strong style="color:var(--text)">4th meta-model</strong> into a final default probability — separately for
-      <strong style="color:var(--text)">30 days</strong> and <strong style="color:var(--text)">60 days</strong>.
-      All feature weights are <strong style="color:var(--text)">tunable by the credit risk team</strong> without retraining the model.
-    </div>
-  </div>
-
-  <!-- ── 30d vs 60d explainer ── -->
-  <div class="card full-col" style="margin-bottom:18px">
-    <div class="card-title"><span class="card-title-bar" style="background:#A78BFA"></span>How 30-day vs 60-day Models Differ</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
-
-      <div style="background:var(--s2);border-radius:10px;padding:18px;border:1px solid rgba(239,68,68,0.18)">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#9B1C1C;margin-bottom:10px">30-Day Model — Acute Stress</div>
-        <div style="font-size:12px;color:var(--muted);line-height:1.7">
-          Detects accounts <strong style="color:var(--text)">already showing payment failure</strong>.
-          The training label is <em>went_delinquent_30d</em> — did the account miss a payment within 30 days of the snapshot?
-          <br><br>
-          <strong style="color:#9B1C1C">Key drivers:</strong> recent partial/missed payments
-          (<code style="font-size:10px;background:var(--s3);padding:1px 5px;border-radius:3px">payment_deterioration_score</code>),
-          recency-weighted payment stress
-          (<code style="font-size:10px;background:var(--s3);padding:1px 5px;border-radius:3px">recency_weighted_stress</code>),
-          and call avoidance
-          (<code style="font-size:10px;background:var(--s3);padding:1px 5px;border-radius:3px">contact_avoidance_score</code>).
-          <br><br>
-          The distress is <strong style="color:var(--text)">already visible in behaviour</strong> — the model is confirming what the data already shows.
-        </div>
-      </div>
-
-      <div style="background:var(--s2);border-radius:10px;padding:18px;border:1px solid rgba(234,179,8,0.18)">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#713F12;margin-bottom:10px">60-Day Model — Slow Burn</div>
-        <div style="font-size:12px;color:var(--muted);line-height:1.7">
-          Detects accounts <strong style="color:var(--text)">structurally deteriorating</strong> but still paying today.
-          The training label is <em>went_delinquent_60d</em>.
-          <br><br>
-          <strong style="color:#713F12">Key drivers:</strong> bank surplus shrinking
-          (<code style="font-size:10px;background:var(--s3);padding:1px 5px;border-radius:3px">financial_cushion_trend</code>),
-          income instability
-          (<code style="font-size:10px;background:var(--s3);padding:1px 5px;border-radius:3px">income_reliability_score</code>),
-          and employment events
-          (<code style="font-size:10px;background:var(--s3);padding:1px 5px;border-radius:3px">employment_event_recency</code>).
-          <br><br>
-          The account pays now but its <strong style="color:var(--text)">foundation is eroding</strong> — the model is catching the early warning before behaviour changes.
-        </div>
-      </div>
-
-      <div style="background:var(--s2);border-radius:10px;padding:18px;border:1px solid rgba(59,130,246,0.18)">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#1E3A8A;margin-bottom:10px">Composite Score &amp; Label Distribution</div>
-        <div style="font-size:12px;color:var(--muted);line-height:1.7">
-          Risk tier uses: <strong style="color:var(--text)">prob_30d × 0.60 + prob_60d × 0.40</strong>.
-          30-day gets higher weight because it has higher business urgency.
-          <br><br>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
-          <div style="background:var(--s3);border-radius:7px;padding:10px 12px">
-            <div style="font-size:10px;font-weight:700;color:#14532D;margin-bottom:3px">False / False — 2,556 accounts (51.1%)</div>
-            <div style="font-size:11px;color:var(--muted)">Stays current for 60+ days. Low risk.</div>
-          </div>
-          <div style="background:var(--s3);border-radius:7px;padding:10px 12px">
-            <div style="font-size:10px;font-weight:700;color:#713F12;margin-bottom:3px">False / True — 952 accounts (19.0%)</div>
-            <div style="font-size:11px;color:var(--muted)">Pays in month 1, defaults in month 2. Slow burn — 60d model catches these.</div>
-          </div>
-          <div style="background:var(--s3);border-radius:7px;padding:10px 12px">
-            <div style="font-size:10px;font-weight:700;color:#9B1C1C;margin-bottom:3px">True / True — 1,492 accounts (29.8%)</div>
-            <div style="font-size:11px;color:var(--muted)">Defaults within 30 days. Already in acute stress — 30d model catches these.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── Full pipeline flow ── -->
-  <div class="card full-col" style="margin-bottom:18px">
-    <div class="card-title"><span class="card-title-bar" style="background:#60A5FA"></span>End-to-End Pipeline</div>
-
-    <!-- Visual flow -->
-    <div style="display:flex;align-items:center;gap:0;overflow-x:auto;padding-bottom:4px;margin-bottom:20px">
-
-      <!-- Step 1: 6 CSVs -->
-      <div style="flex-shrink:0;background:var(--s2);border:1px solid var(--border2);border-radius:10px;padding:14px 16px;min-width:120px;text-align:center">
-        <div style="font-size:18px;margin-bottom:6px">📂</div>
-        <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px">6 Raw Data Sources</div>
-        <div style="font-size:10px;color:var(--muted);line-height:1.5">Loan · Bank · Bureau<br>Telecall · EPFO · Payment</div>
-      </div>
-
-      <div style="flex-shrink:0;display:flex;align-items:center;padding:0 8px;color:var(--muted);font-size:18px">→</div>
-
-      <!-- Step 2: Feature engineering -->
-      <div style="flex-shrink:0;background:var(--s2);border:1px solid rgba(167,139,250,0.35);border-radius:10px;padding:14px 16px;min-width:130px;text-align:center">
-        <div style="font-size:18px;margin-bottom:6px">⚙️</div>
-        <div style="font-size:11px;font-weight:700;color:#4C1D95;margin-bottom:4px">Feature Engineering</div>
-        <div style="font-size:10px;color:var(--muted);line-height:1.5">10 signals computed<br>per account (0–1 each)<br><em style="color:var(--s3)">domain weights applied</em></div>
-      </div>
-
-      <div style="flex-shrink:0;display:flex;align-items:center;padding:0 8px;color:var(--muted);font-size:18px">→</div>
-
-      <!-- Step 3: 3 base models -->
-      <div style="flex-shrink:0;display:flex;flex-direction:column;gap:6px;min-width:150px">
-        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);text-align:center;margin-bottom:2px">Layer 1 — 3 Base Models (parallel)</div>
-        <div style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.28);border-radius:7px;padding:8px 12px;text-align:center">
-          <div style="font-size:11px;font-weight:700;color:#1E3A8A">Logistic Regression</div>
-          <div style="font-size:10px;color:var(--muted)">scaled input · linear patterns</div>
-        </div>
-        <div style="background:rgba(34,197,94,0.09);border:1px solid rgba(34,197,94,0.25);border-radius:7px;padding:8px 12px;text-align:center">
-          <div style="font-size:11px;font-weight:700;color:#14532D">Random Forest</div>
-          <div style="font-size:10px;color:var(--muted)">raw input · feature combos</div>
-        </div>
-        <div style="background:rgba(249,115,22,0.09);border:1px solid rgba(249,115,22,0.25);border-radius:7px;padding:8px 12px;text-align:center">
-          <div style="font-size:11px;font-weight:700;color:#9A3412">XGBoost</div>
-          <div style="font-size:10px;color:var(--muted)">raw input · learns from errors</div>
-        </div>
-        <div style="font-size:10px;color:var(--muted);text-align:center">↓ each outputs a probability</div>
-      </div>
-
-      <div style="flex-shrink:0;display:flex;align-items:center;padding:0 8px;color:var(--muted);font-size:18px">→</div>
-
-      <!-- Step 4: Meta model -->
-      <div style="flex-shrink:0;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.28);border-radius:10px;padding:14px 16px;min-width:130px;text-align:center">
-        <div style="font-size:18px;margin-bottom:6px">🧠</div>
-        <div style="font-size:11px;font-weight:700;color:#9B1C1C;margin-bottom:4px">Layer 2 — Meta Model</div>
-        <div style="font-size:10px;color:var(--muted);line-height:1.5">Logistic Regression<br>blends the 3 probabilities<br>learned optimal weights</div>
-      </div>
-
-      <div style="flex-shrink:0;display:flex;align-items:center;padding:0 8px;color:var(--muted);font-size:18px">→</div>
-
-      <!-- Step 5: Final probability -->
-      <div style="flex-shrink:0;background:var(--s2);border:1px solid var(--border2);border-radius:10px;padding:14px 16px;min-width:120px;text-align:center">
-        <div style="font-size:18px;margin-bottom:6px">📊</div>
-        <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:6px">Final Probability</div>
-        <div style="font-size:10px;font-weight:700;color:#9B1C1C;margin-bottom:2px">prob_30d_ensemble</div>
-        <div style="font-size:10px;font-weight:700;color:#713F12">prob_60d_ensemble</div>
-      </div>
-
-      <div style="flex-shrink:0;display:flex;align-items:center;padding:0 8px;color:var(--muted);font-size:18px">→</div>
-
-      <!-- Step 6: Tier -->
-      <div style="flex-shrink:0;background:var(--s2);border:1px solid var(--border2);border-radius:10px;padding:14px 16px;min-width:110px;text-align:center">
-        <div style="font-size:18px;margin-bottom:6px">🏷️</div>
-        <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:6px">Risk Tier</div>
-        <div style="font-size:10px;color:#9B1C1C;font-weight:700">Critical ≥ 0.70</div>
-        <div style="font-size:10px;color:#9A3412;font-weight:700">High ≥ 0.45</div>
-        <div style="font-size:10px;color:#713F12;font-weight:700">Medium ≥ 0.20</div>
-        <div style="font-size:10px;color:#14532D;font-weight:700">Low &lt; 0.20</div>
-      </div>
-
-    </div><!-- end flow -->
-
-    <!-- Why each model -->
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:10px">Why These 4 Models — and Not Others</div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px">
-
-      <div style="background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.2);border-radius:9px;padding:14px">
-        <div style="font-size:11px;font-weight:700;color:#1E3A8A;margin-bottom:8px">Logistic Regression</div>
-        <div style="font-size:11px;color:var(--muted);line-height:1.65">
-          <strong style="color:var(--text)">Why chosen:</strong> Some signals have a near-linear relationship with default — e.g., as debt pressure rises from 0.5 → 2.0, default probability rises almost proportionally. LR captures this cleanly.<br><br>
-          <strong style="color:var(--text)">Why not alone:</strong> Treats each feature independently — misses combinations like high debt pressure AND high contact avoidance together being far worse than either alone.<br><br>
-          <strong style="color:var(--text)">Why not SVM instead:</strong> No native probability output, poor interpretability, hard to explain to regulators.
-        </div>
-      </div>
-
-      <div style="background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.2);border-radius:9px;padding:14px">
-        <div style="font-size:11px;font-weight:700;color:#14532D;margin-bottom:8px">Random Forest</div>
-        <div style="font-size:11px;color:var(--muted);line-height:1.65">
-          <strong style="color:var(--text)">Why chosen:</strong> Builds hundreds of decision trees on random subsets of data (bagging). Naturally detects feature combinations — e.g., self-employed + high income stress + high bureau stress together.<br><br>
-          <strong style="color:var(--text)">Why not alone:</strong> Trees are built independently — doesn't learn from its own prediction errors. XGBoost fixes this.<br><br>
-          <strong style="color:var(--text)">Why not KNN instead:</strong> Computationally expensive at scoring time, no feature importance, sensitive to scale.
-        </div>
-      </div>
-
-      <div style="background:rgba(249,115,22,0.07);border:1px solid rgba(249,115,22,0.2);border-radius:9px;padding:14px">
-        <div style="font-size:11px;font-weight:700;color:#9A3412;margin-bottom:8px">XGBoost</div>
-        <div style="font-size:11px;color:var(--muted);line-height:1.65">
-          <strong style="color:var(--text)">Why chosen:</strong> Gradient boosting — each new tree specifically corrects the errors of the previous ones. Best-performing model class on tabular data benchmarks. Handles class imbalance via <code style="background:var(--s3);padding:1px 4px;border-radius:3px">scale_pos_weight</code>.<br><br>
-          <strong style="color:var(--text)">Why not a neural network:</strong> With 10 features and 5,000 accounts, a neural network would severely overfit. XGBoost is the right tool for this data size and type — validated repeatedly in academic and industry benchmarks.
-        </div>
-      </div>
-
-      <div style="background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);border-radius:9px;padding:14px">
-        <div style="font-size:11px;font-weight:700;color:#9B1C1C;margin-bottom:8px">Meta Logistic Regression</div>
-        <div style="font-size:11px;color:var(--muted);line-height:1.65">
-          <strong style="color:var(--text)">Why a 4th model:</strong> Each base model has different blind spots. Rather than averaging the 3 probabilities equally, this model learns from training data <em>when to trust which model more</em> — e.g., XGBoost may be more reliable for self-employed, LR for salaried.<br><br>
-          <strong style="color:var(--text)">Why LR and not another XGBoost:</strong> The meta model only has 3 inputs. A complex model on 3 inputs would overfit immediately. LR on 3 inputs simply learns the optimal blend weights — simple and calibrated.
-        </div>
-      </div>
-    </div>
-
-    <!-- Validation strip -->
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
-      <div style="background:var(--s2);border-radius:8px;padding:12px;text-align:center;border:1px solid var(--border2)">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px">AUC — 30d</div>
-        <div style="font-size:22px;font-weight:800;color:#14532D">0.86</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:3px">target ≥ 0.72 <span class="pf-pass">PASS</span></div>
-      </div>
-      <div style="background:var(--s2);border-radius:8px;padding:12px;text-align:center;border:1px solid var(--border2)">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px">AUC — 60d</div>
-        <div style="font-size:22px;font-weight:800;color:#14532D">0.87</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:3px">target ≥ 0.68 <span class="pf-pass">PASS</span></div>
-      </div>
-      <div style="background:var(--s2);border-radius:8px;padding:12px;text-align:center;border:1px solid var(--border2)">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px">False Positive Rate</div>
-        <div style="font-size:22px;font-weight:800;color:#14532D">12.5%</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:3px">target ≤ 25% <span class="pf-pass">PASS</span></div>
-      </div>
-      <div style="background:var(--s2);border-radius:8px;padding:12px;text-align:center;border:1px solid var(--border2)">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px">Test Set Size</div>
-        <div style="font-size:22px;font-weight:800;color:var(--text)">1,500</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:3px">held-out 30% stratified</div>
-      </div>
-      <div style="background:var(--s2);border-radius:8px;padding:12px;text-align:center;border:1px solid var(--border2)">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px">Critical Tier Lift</div>
-        <div style="font-size:22px;font-weight:800;color:#9B1C1C">2.36×</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:3px">vs. random selection</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── Tweakability callout ── -->
-  <div style="background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.22);border-radius:10px;padding:16px 20px;margin-bottom:18px;display:flex;gap:16px;align-items:flex-start">
-    <div style="font-size:22px;flex-shrink:0;margin-top:1px">🔧</div>
-    <div>
-      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">Credit Risk Team — What Can Be Tuned Without Retraining</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
-        <div style="font-size:12px;color:var(--muted);line-height:1.6">
-          <strong style="color:#1E3A8A">Feature sub-weights</strong> — the 40%/35%/25% splits inside each of the 10 signals are domain decisions, not learned by the model. If a new lender portfolio has different risk drivers (e.g., GST compliance matters more for their MSME book), these weights can be adjusted in the feature pipeline and inference re-run on existing models.
-        </div>
-        <div style="font-size:12px;color:var(--muted);line-height:1.6">
-          <strong style="color:#1E3A8A">Tier thresholds</strong> — Critical ≥ 0.70, High ≥ 0.45, Medium ≥ 0.20 are configurable in the dashboard Parameters panel in real time. A conservative lender may lower Critical to 0.60 to cast a wider intervention net. No retraining needed.
-        </div>
-        <div style="font-size:12px;color:var(--muted);line-height:1.6">
-          <strong style="color:#1E3A8A">30d/60d blend weight</strong> — the 60%/40% split between the two model outputs is a business decision. If a lender cares more about 60-day early warning (e.g., long-cycle recovery), this can shift to 50%/50% or 40%/60%.  Model retraining is needed only if the feature formulas themselves are changed.
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── 10 Feature cards ── -->
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--muted)">10 Engineered Signals — 0 = No Stress · 1 = Maximum Stress</div>
-    <div style="font-size:11px;color:var(--muted);background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.18);border-radius:6px;padding:4px 12px">Sub-weights inside each signal are tunable by the credit risk team</div>
-  </div>
-
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-
-    <!-- Feature 1 -->
-    <div class="card" style="border-left:3px solid #EF4444">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px">1 · Payment Deterioration Score</div>
-          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#9B1C1C">Primary signal · 30d model driver</div>
-        </div>
-        <div style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;color:#9B1C1C;white-space:nowrap">Last 3 months</div>
-      </div>
-      <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px">
-        Measures how much the account's repayment quality has deteriorated recently. This is the strongest 30-day signal because it directly reflects current payment behaviour with this lender.
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-            <span style="font-size:11px;font-weight:600;color:var(--text)">Partial payment ratio</span>
-            <span style="font-size:11px;font-weight:700;color:#1E3A8A">Weight 40%</span>
-          </div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Average of <code style="background:var(--s3);padding:1px 4px;border-radius:3px">payment_amount / emi_amount</code> over last 3 months. Inverted: lower ratio = higher stress.</div>
-          <div style="font-size:10px;color:#1E3A8A">Why highest weight: paying only 50% of EMI is a continuous signal — it shows both willingness and ability to pay degrading gradually, which correlates strongly with eventual default.</div>
-        </div>
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-            <span style="font-size:11px;font-weight:600;color:var(--text)">Missed payment count</span>
-            <span style="font-size:11px;font-weight:700;color:#1E3A8A">Weight 35%</span>
-          </div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Number of months with status = "Missed" in last 3, normalised by 3.</div>
-          <div style="font-size:10px;color:#1E3A8A">Why second: a full miss is a harder event than a partial payment — but partial payments are more frequent and gradual, so partial ratio edges it out.</div>
-        </div>
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-            <span style="font-size:11px;font-weight:600;color:var(--text)">Average days late</span>
-            <span style="font-size:11px;font-weight:700;color:#1E3A8A">Weight 25%</span>
-          </div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Mean days between actual payment date and due date. Normalised against 30 days.</div>
-          <div style="font-size:10px;color:#1E3A8A">Why lowest: an account already DPD=0 by constraint, so lateness is mild. It adds nuance but is the weakest pre-default signal of the three.</div>
-        </div>
-      </div>
-      <div style="background:rgba(239,68,68,0.07);border-radius:7px;padding:9px 13px;font-size:11px;color:var(--muted)">
-        <strong style="color:#9B1C1C">Score = </strong><code style="color:var(--text)">(1−ratio)×0.40 + clamp(missed/3)×0.35 + clamp(days/30)×0.25</code>
-      </div>
-    </div>
-
-    <!-- Feature 2 -->
-    <div class="card" style="border-left:3px solid #F97316">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px">2 · Financial Cushion Trend</div>
-          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#9A3412">Bank statements · 60d model driver</div>
-        </div>
-        <div style="background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.25);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;color:#9A3412;white-space:nowrap">Last 6 months</div>
-      </div>
-      <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px">
-        Captures whether the customer's financial buffer is shrinking. Looks at bank statement trends, not payment behaviour — catches slow-burn cases before they miss a payment.
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-            <span style="font-size:11px;font-weight:600;color:var(--text)">Net monthly surplus slope</span>
-            <span style="font-size:11px;font-weight:700;color:#1E3A8A">Weight 45%</span>
-          </div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Linear regression slope of <code style="background:var(--s3);padding:1px 4px;border-radius:3px">net_monthly_surplus</code> over 6 months. Negative slope = cushion eroding.</div>
-          <div style="font-size:10px;color:#1E3A8A">Why highest: a consistently shrinking surplus is the clearest early warning that the customer will eventually run out of buffer to pay EMIs — even before expenses spike or balance hits zero.</div>
-        </div>
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-            <span style="font-size:11px;font-weight:600;color:var(--text)">Expense-to-income ratio</span>
-            <span style="font-size:11px;font-weight:700;color:#1E3A8A">Weight 30%</span>
-          </div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Average of last 3 months. Stress contribution begins above 0.5 — when more than half of income is going to expenses.</div>
-          <div style="font-size:10px;color:#1E3A8A">Why second: snapshot metric — shows current tightness. Less predictive than the slope because a high ratio may be stable if income is also high.</div>
-        </div>
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-            <span style="font-size:11px;font-weight:600;color:var(--text)">Days balance near zero</span>
-            <span style="font-size:11px;font-weight:700;color:#1E3A8A">Weight 25%</span>
-          </div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Total days across last 3 months where bank balance was near ₹0. Normalised by 30.</div>
-          <div style="font-size:10px;color:#1E3A8A">Why lowest: an episodic signal — cash crunch days happen even in healthy accounts around EMI cycles. More of a confirming signal than a leading one.</div>
-        </div>
-      </div>
-      <div style="background:rgba(249,115,22,0.07);border-radius:7px;padding:9px 13px;font-size:11px;color:var(--muted)">
-        <strong style="color:#9A3412">Score = </strong><code style="color:var(--text)">slope_norm×0.45 + expense_stress×0.30 + near_zero×0.25</code>
-      </div>
-    </div>
-
-    <!-- Feature 3 -->
-    <div class="card" style="border-left:3px solid #A78BFA">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px">3 · Income Reliability Score</div>
-          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#4C1D95">EPFO + Bank · Employment-type aware</div>
-        </div>
-        <div style="background:rgba(167,139,250,0.12);border:1px solid rgba(167,139,250,0.25);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;color:#4C1D95;white-space:nowrap">Last 6 months</div>
-      </div>
-      <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px">
-        The only feature with <strong style="color:var(--text)">two separate code paths</strong> — one for salaried, one for self-employed. A salaried person's income risk looks completely different from a business owner's, so using the same formula for both would lose signal.
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#14532D;margin-bottom:8px">Salaried path</div>
-          <div style="font-size:11px;color:var(--muted);line-height:1.65">
-            <strong style="color:var(--text)">Salary delay slope (40%)</strong> — is salary arriving later each month? Trend matters more than a single late payment.<br><br>
-            <strong style="color:var(--text)">EPFO zero-contribution months (35%)</strong> — employer not paying EPFO is a strong proxy for job loss or employer distress.<br><br>
-            <strong style="color:var(--text)">Job change detected (25%)</strong> — any job change = income gap risk, even if new job pays more.
-          </div>
-        </div>
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9A3412;margin-bottom:8px">Self-Employed path</div>
-          <div style="font-size:11px;color:var(--muted);line-height:1.65">
-            <strong style="color:var(--text)">GST filing status (40%)</strong> — Not Filed=1.0, Late Filed=0.5, Filed=0.0. Non-compliance is the strongest business health signal available.<br><br>
-            <strong style="color:var(--text)">UPI inflow trend (35%)</strong> — declining business receipts = falling revenue, the most direct income signal.<br><br>
-            <strong style="color:var(--text)">ITR filed flag (25%)</strong> — not filing income tax = either no taxable income or compliance breakdown.
-          </div>
-        </div>
-      </div>
-      <div style="background:rgba(167,139,250,0.07);border-radius:7px;padding:9px 13px;font-size:11px;color:var(--muted)">
-        <strong style="color:#4C1D95">Salaried score = </strong><code style="color:var(--text)">delay_slope×0.40 + zero_epfo×0.35 + job_change×0.25</code><br>
-        <strong style="color:#4C1D95">Self-Employed score = </strong><code style="color:var(--text)">gst_stress×0.40 + upi_stress×0.35 + itr_miss×0.25</code>
-      </div>
-    </div>
-
-    <!-- Feature 4 -->
-    <div class="card" style="border-left:3px solid #EF4444">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px">4 · Bureau Stress Score</div>
-          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#9B1C1C">External credit bureau · Cross-lender view</div>
-        </div>
-        <div style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;color:#9B1C1C;white-space:nowrap">Latest snapshot</div>
-      </div>
-      <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px">
-        Looks beyond this lender at the customer's full credit behaviour. A customer may be paying us but struggling elsewhere.
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-            <span style="font-size:11px;font-weight:600;color:var(--text)">Credit score drop vs 6m ago</span>
-            <span style="font-size:11px;font-weight:700;color:#1E3A8A">Weight 40%</span>
-          </div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Normalised by 100 points. A 100-point drop = full stress contribution.</div>
-          <div style="font-size:10px;color:#1E3A8A">Why highest: the credit score aggregates all credit behaviour across lenders — a drop means something deteriorated externally. It's a summary signal with broad coverage.</div>
-        </div>
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-            <span style="font-size:11px;font-weight:600;color:var(--text)">Missed payments — other lenders (6m)</span>
-            <span style="font-size:11px;font-weight:700;color:#1E3A8A">Weight 35%</span>
-          </div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Normalised by 5. Customers prioritise secured/larger loans, so this lender is often first to see missed payments.</div>
-          <div style="font-size:10px;color:#1E3A8A">Why second: direct evidence of default behaviour with other lenders — the most specific signal of financial overextension.</div>
-        </div>
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-            <span style="font-size:11px;font-weight:600;color:var(--text)">Hard enquiries in last 30 days</span>
-            <span style="font-size:11px;font-weight:700;color:#1E3A8A">Weight 25%</span>
-          </div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Multiple credit applications in 30 days = seeking emergency funds. Normalised by 5.</div>
-          <div style="font-size:10px;color:#1E3A8A">Why lowest: enquiries alone can be benign (comparison shopping). Valuable as a confirming signal but not a standalone predictor.</div>
-        </div>
-      </div>
-      <div style="background:rgba(239,68,68,0.07);border-radius:7px;padding:9px 13px;font-size:11px;color:var(--muted)">
-        <strong style="color:#9B1C1C">Score = </strong><code style="color:var(--text)">drop_norm×0.40 + missed_other×0.35 + hard_enq×0.25</code>
-      </div>
-    </div>
-
-    <!-- Feature 5 -->
-    <div class="card" style="border-left:3px solid #F97316">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px">5 · Contact Avoidance Score</div>
-          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#9A3412">Telecall history · Behavioural signal</div>
-        </div>
-        <div style="background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.25);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;color:#9A3412;white-space:nowrap">Last 1 month</div>
-      </div>
-      <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px">
-        Avoidance of collections calls is one of the strongest pre-default signals. Customers who stop answering are typically unable or unwilling to discuss repayment.
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-            <span style="font-size:11px;font-weight:600;color:var(--text)">Response rate (last 30 days)</span>
-            <span style="font-size:11px;font-weight:700;color:#1E3A8A">Weight 35%</span>
-          </div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Inverted: <code style="background:var(--s3);padding:1px 4px;border-radius:3px">(1 − response_rate)</code>. Not answering calls = high stress.</div>
-          <div style="font-size:10px;color:#1E3A8A">Why: consistent non-response over 30 days means the customer is either unable to face the conversation (distress) or actively avoiding it (intent). Both correlate with default.</div>
-        </div>
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-            <span style="font-size:11px;font-weight:600;color:var(--text)">Consecutive unanswered calls</span>
-            <span style="font-size:11px;font-weight:700;color:#1E3A8A">Weight 35%</span>
-          </div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Maximum streak of unanswered calls, normalised by 10. A streak of 10+ = maximum stress.</div>
-          <div style="font-size:10px;color:#1E3A8A">Why equal weight: a streak is more alarming than an average rate — 10 consecutive ignores is a deliberate pattern, not random unavailability.</div>
-        </div>
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-            <span style="font-size:11px;font-weight:600;color:var(--text)">Days since last contact</span>
-            <span style="font-size:11px;font-weight:700;color:#1E3A8A">Weight 30%</span>
-          </div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Normalised by 30 days. Silent for a full month = maximum contribution.</div>
-          <div style="font-size:10px;color:#1E3A8A">Why lowest: long silence may just mean the team hasn't called yet. It's a confirming signal rather than a leading one.</div>
-        </div>
-      </div>
-      <div style="background:rgba(249,115,22,0.07);border-radius:7px;padding:9px 13px;font-size:11px;color:var(--muted)">
-        <strong style="color:#9A3412">Score = </strong><code style="color:var(--text)">(1−resp)×0.35 + streak×0.35 + silence×0.30</code>
-      </div>
-    </div>
-
-    <!-- Feature 6 -->
-    <div class="card" style="border-left:3px solid #EAB308">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px">6 · Debt Pressure Ratio</div>
-          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#713F12">Bank + Loan data · Can exceed 1.0</div>
-        </div>
-        <div style="background:rgba(234,179,8,0.12);border:1px solid rgba(234,179,8,0.25);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;color:#713F12;white-space:nowrap">Last 1 month</div>
-      </div>
-      <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px">
-        Total EMI obligations (this loan + all other lenders) as a fraction of monthly income. The only feature deliberately <strong style="color:var(--text)">not clamped to 1.0</strong> — it can reach 2.0 when total EMIs exceed income.
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:3px">Formula</div>
-          <div style="font-size:11px;color:var(--muted)"><code style="background:var(--s3);padding:2px 5px;border-radius:3px">(this_emi + emi_outflow_other_lenders) / total_monthly_inflow</code><br><br>
-          Uses the most recent bank statement month. If monthly income is zero or missing, ratio defaults to 2.0 (maximum stress).</div>
-        </div>
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:3px">Interpretation thresholds</div>
-          <div style="font-size:11px;color:var(--muted)">
-            <span style="color:#14532D">DPR &lt; 0.5</span> — healthy, ample buffer<br>
-            <span style="color:#713F12">DPR 0.5–1.0</span> — stretched but manageable<br>
-            <span style="color:#9A3412">DPR 1.0–1.2</span> — EMIs exceed income, unsustainable<br>
-            <span style="color:#9B1C1C">DPR &gt; 1.2</span> → triggers EMI Restructure recommendation
-          </div>
-        </div>
-      </div>
-      <div style="background:rgba(234,179,8,0.07);border-radius:7px;padding:9px 13px;font-size:11px;color:var(--muted)">
-        <strong style="color:#713F12">Score = </strong><code style="color:var(--text)">(this_emi + emi_other) / monthly_inflow</code> &nbsp;| clamped 0–2.0 · defaults to 2.0 if income = 0
-      </div>
-    </div>
-
-    <!-- Feature 7 -->
-    <div class="card" style="border-left:3px solid #22C55E">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px">7 · PTP Reliability Score</div>
-          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#14532D">Telecall · Promise-to-Pay tracking</div>
-        </div>
-        <div style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.25);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;color:#14532D;white-space:nowrap">Last 6 months</div>
-      </div>
-      <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px">
-        Tracks whether the customer keeps their word during collections calls. A customer who repeatedly promises to pay and then doesn't is a strong indicator of inability (not just unwillingness) to repay.
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:3px">If PTP was ever made (last 6 months)</div>
-          <div style="font-size:11px;color:var(--muted)">
-            <strong style="color:var(--text)">PTP fulfillment rate (50%)</strong> — inverted: <code style="background:var(--s3);padding:1px 4px;border-radius:3px">1 − fulfillment_rate</code>. Low fulfillment = high stress.<br><br>
-            <strong style="color:var(--text)">Broken PTP count in last 3m (50%)</strong> — normalised by 3. Breaking multiple recent promises = maximum stress.
-          </div>
-        </div>
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:3px">If no PTP was made</div>
-          <div style="font-size:11px;color:var(--muted)">Default score of <strong style="color:var(--text)">0.30</strong> — moderate baseline stress. No contact means uncertainty, not safety.</div>
-        </div>
-      </div>
-      <div style="background:rgba(34,197,94,0.07);border-radius:7px;padding:9px 13px;font-size:11px;color:var(--muted)">
-        <strong style="color:#14532D">Score (if PTP made) = </strong><code style="color:var(--text)">(1−fulfillment_rate)×0.50 + clamp(broken/3)×0.50</code> &nbsp;| <strong style="color:#14532D">Score (no PTP) = </strong><code style="color:var(--text)">0.30</code>
-      </div>
-    </div>
-
-    <!-- Feature 8 -->
-    <div class="card" style="border-left:3px solid #EC4899">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px">8 · Sentiment Distress Signal</div>
-          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#831843">Telecall · Emotion + tone analysis</div>
-        </div>
-        <div style="background:rgba(236,72,153,0.12);border:1px solid rgba(236,72,153,0.25);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;color:#831843;white-space:nowrap">Last 1–3 months</div>
-      </div>
-      <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px">
-        Combines the tone and emotional content of collections calls into a single distress score. Drives both intervention tone and offer type.
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-            <span style="font-size:11px;font-weight:600;color:var(--text)">Sentiment score (last call)</span>
-            <span style="font-size:11px;font-weight:700;color:#1E3A8A">Weight 35%</span>
-          </div>
-          <div style="font-size:11px;color:var(--muted)">Inverted: <code style="background:var(--s3);padding:1px 4px;border-radius:3px">1 − sentiment_score</code>. Low sentiment = high distress.</div>
-        </div>
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-            <span style="font-size:11px;font-weight:600;color:var(--text)">Dominant emotion (last call)</span>
-            <span style="font-size:11px;font-weight:700;color:#1E3A8A">Weight 30%</span>
-          </div>
-          <div style="font-size:11px;color:var(--muted)">
-            Cooperative=0.0, Avoidant=0.4, Frustrated=0.6, Distressed=0.7, Hostile=0.8, Resigned=0.9
-          </div>
-        </div>
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-            <span style="font-size:11px;font-weight:600;color:var(--text)">Hardship mentioned (last 3 calls)</span>
-            <span style="font-size:11px;font-weight:700;color:#1E3A8A">Weight 20%</span>
-          </div>
-          <div style="font-size:11px;color:var(--muted)">Binary: any hardship mention = 1.0. Also directly triggers "Vulnerability" intervention tone.</div>
-        </div>
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-            <span style="font-size:11px;font-weight:600;color:var(--text)">Sentiment trend slope (last 3 calls)</span>
-            <span style="font-size:11px;font-weight:700;color:#1E3A8A">Weight 15%</span>
-          </div>
-          <div style="font-size:11px;color:var(--muted)">Is sentiment improving or declining? Negative slope = increasing distress.</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Feature 9 -->
-    <div class="card" style="border-left:3px solid #EF4444">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px">9 · Recency-Weighted Stress</div>
-          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#9B1C1C">Payment history · Exponential recency weighting</div>
-        </div>
-        <div style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;color:#9B1C1C;white-space:nowrap">Last 6 months</div>
-      </div>
-      <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px">
-        Similar to Payment Deterioration but uses an <strong style="color:var(--text)">exponential recency weighting</strong> over 6 months instead of a simple average.
-        A recent partial payment matters much more than one 6 months ago.
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:4px">Weights per month (oldest → newest)</div>
-          <div style="display:flex;gap:6px;margin-bottom:6px">
-            <div style="flex:1;text-align:center;background:var(--s3);border-radius:5px;padding:5px;font-size:10px;color:var(--muted)">M-5<br><strong style="color:var(--text)">5%</strong></div>
-            <div style="flex:1;text-align:center;background:var(--s3);border-radius:5px;padding:5px;font-size:10px;color:var(--muted)">M-4<br><strong style="color:var(--text)">8%</strong></div>
-            <div style="flex:1;text-align:center;background:var(--s3);border-radius:5px;padding:5px;font-size:10px;color:var(--muted)">M-3<br><strong style="color:var(--text)">12%</strong></div>
-            <div style="flex:1;text-align:center;background:var(--s3);border-radius:5px;padding:5px;font-size:10px;color:var(--muted)">M-2<br><strong style="color:var(--text)">17%</strong></div>
-            <div style="flex:1;text-align:center;background:rgba(249,115,22,0.15);border-radius:5px;padding:5px;font-size:10px;color:var(--muted)">M-1<br><strong style="color:#9A3412">25%</strong></div>
-            <div style="flex:1;text-align:center;background:rgba(239,68,68,0.15);border-radius:5px;padding:5px;font-size:10px;color:var(--muted)">Now<br><strong style="color:#9B1C1C">33%</strong></div>
-          </div>
-          <div style="font-size:11px;color:var(--muted)">The most recent month carries 6.6× more weight than the oldest. Stress = <code style="background:var(--s3);padding:1px 4px;border-radius:3px">(1 − partial_ratio)</code> per month, weighted sum.</div>
-        </div>
-      </div>
-      <div style="background:rgba(239,68,68,0.07);border-radius:7px;padding:9px 13px;font-size:11px;color:var(--muted)">
-        <strong style="color:#9B1C1C">Score = </strong><code style="color:var(--text)">Σ (1 − ratio_m) × weight_m</code> &nbsp;| weights normalised to sum = 1
-      </div>
-    </div>
-
-    <!-- Feature 10 -->
-    <div class="card" style="border-left:3px solid #A78BFA">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px">10 · Employment Event Recency</div>
-          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#4C1D95">EPFO + Bank · 60d model driver</div>
-        </div>
-        <div style="background:rgba(167,139,250,0.12);border:1px solid rgba(167,139,250,0.25);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;color:#4C1D95;white-space:nowrap">Last 6 months</div>
-      </div>
-      <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px">
-        Captures how recently a significant employment or business event occurred — and how severe it is. More recent events = higher stress. This is a key 60d signal because employment instability takes time to show up in payments.
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#14532D;margin-bottom:8px">Salaried path</div>
-          <div style="font-size:11px;color:var(--muted);line-height:1.6">
-            Job change detected → score = <code style="background:var(--s3);padding:1px 4px;border-radius:3px">1 − months_since/6</code> (more recent = higher).<br><br>
-            No job change → checks EPFO zero-contribution months (≥3 → 0.70) or days since last contribution (&gt;60 → 0.50).<br><br>
-            No events → <strong style="color:#14532D">0.0</strong>
-          </div>
-        </div>
-        <div style="background:var(--s2);border-radius:7px;padding:10px 13px">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#9A3412;margin-bottom:8px">Self-Employed path</div>
-          <div style="font-size:11px;color:var(--muted);line-height:1.6">
-            GST turnover trend declining 2+ months → <strong style="color:#9B1C1C">0.80</strong><br>
-            Declining 1 month → <strong style="color:#9A3412">0.50</strong><br>
-            No decline but ITR not filed → <strong style="color:#713F12">0.40</strong><br>
-            All clear → <strong style="color:#14532D">0.0</strong>
-          </div>
-        </div>
-      </div>
-      <div style="background:rgba(167,139,250,0.07);border-radius:7px;padding:9px 13px;font-size:11px;color:var(--muted)">
-        <strong style="color:#4C1D95">Salaried score = </strong><code style="color:var(--text)">1 − months_since_job_change/6</code> &nbsp;| or 0.70 / 0.50 / 0.0 based on EPFO gaps<br>
-        <strong style="color:#4C1D95">Self-Employed score = </strong><code style="color:var(--text)">0.80 / 0.50 / 0.40 / 0.0</code> based on GST trend + ITR flag
-      </div>
-    </div>
-
-  </div><!-- end 2-col grid -->
-
-</div><!-- /.main -->
-</div><!-- /#tab-signals -->
-
-<!-- ═══════════════════════════════ RECOMMENDATIONS ═══════════════════════════════ -->
-<div id="tab-recommendations" class="tab-pane">
-<div class="main">
-
-  <!-- Header -->
-  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px;flex-wrap:wrap;gap:8px">
-    <div>
-      <div style="font-size:18px;font-weight:800;letter-spacing:-0.4px;margin-bottom:5px">Recommendations</div>
-      <div style="font-size:13px;color:var(--muted);max-width:700px;line-height:1.6">
-        Every <strong style="color:var(--text)">High</strong> and <strong style="color:var(--text)">Critical</strong> account gets 4 recommendation components — Action, Timing, Tone, and Offer — all generated from the feature signals, not manually assigned.
-        <span id="rec-header-count" style="color:var(--accent)"></span>
-      </div>
-    </div>
-    <div style="font-size:11px;color:var(--muted);background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.18);border-radius:6px;padding:6px 12px">
-      Low &amp; Medium accounts receive no recommendation — intervention cost exceeds expected recovery
-    </div>
-  </div>
-
-  <!-- KPI strip -->
-  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px">
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px">
-      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Active Recommendations</div>
-      <div style="font-size:22px;font-weight:800" id="rec-k-total">—</div>
-    </div>
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px">
-      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Top Action Type</div>
-      <div style="font-size:13px;font-weight:700;color:#9A3412;line-height:1.3" id="rec-k-top-action">—</div>
-    </div>
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px">
-      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Vulnerability Tone</div>
-      <div style="font-size:22px;font-weight:800;color:#831843" id="rec-k-vuln">—</div>
-      <div style="font-size:10px;color:var(--muted);margin-top:2px">handle with care</div>
-    </div>
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px">
-      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">EMI Restructures</div>
-      <div style="font-size:22px;font-weight:800;color:#9B1C1C" id="rec-k-restructure">—</div>
-      <div style="font-size:10px;color:var(--muted);margin-top:2px">highest avg net benefit</div>
-    </div>
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px">
-      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Total Expected Recovery</div>
-      <div style="font-size:22px;font-weight:800;color:#14532D" id="rec-k-recovery">—</div>
-    </div>
-  </div>
-
-  <!-- How recommendations are generated -->
-  <div class="card full-col" style="margin-bottom:16px">
-    <div class="card-title"><span class="card-title-bar" style="background:#A78BFA"></span>How Each Recommendation Component is Generated</div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
-
-      <div style="background:var(--s2);border-radius:9px;padding:14px;border-top:3px solid #3B82F6">
-        <div style="font-size:11px;font-weight:700;color:#1E3A8A;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:10px">1 · Action (9 types)</div>
-        <div style="font-size:11px;color:var(--muted);line-height:1.65;margin-bottom:10px">
-          The model finds which of the 10 feature signals is <strong style="color:var(--text)">highest</strong> for that account — that becomes the <em>top_signal</em>. Each signal maps to exactly one action.
-        </div>
-        <div style="display:flex;flex-direction:column;gap:4px">
-          <div style="font-size:10px;display:flex;justify-content:space-between;padding:3px 7px;background:var(--s3);border-radius:4px"><span style="color:var(--muted)">debt_pressure_ratio</span><span style="color:#1E3A8A;font-weight:600">EMI Relief</span></div>
-          <div style="font-size:10px;display:flex;justify-content:space-between;padding:3px 7px;background:var(--s3);border-radius:4px"><span style="color:var(--muted)">employment_event_recency</span><span style="color:#1E3A8A;font-weight:600">Hardship Call</span></div>
-          <div style="font-size:10px;display:flex;justify-content:space-between;padding:3px 7px;background:var(--s3);border-radius:4px"><span style="color:var(--muted)">sentiment_distress_signal</span><span style="color:#1E3A8A;font-weight:600">Empathy Outreach</span></div>
-          <div style="font-size:10px;display:flex;justify-content:space-between;padding:3px 7px;background:var(--s3);border-radius:4px"><span style="color:var(--muted)">ptp_reliability_score</span><span style="color:#1E3A8A;font-weight:600">PTP Re-engagement</span></div>
-          <div style="font-size:10px;color:var(--muted);padding:3px 7px">+ 5 more mappings</div>
-        </div>
-      </div>
-
-      <div style="background:var(--s2);border-radius:9px;padding:14px;border-top:3px solid #22C55E">
-        <div style="font-size:11px;font-weight:700;color:#14532D;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:10px">2 · Timing</div>
-        <div style="font-size:11px;color:var(--muted);line-height:1.65;margin-bottom:10px">
-          Pulled directly from <strong style="color:var(--text)">best_contact_hour</strong> in telecall history — the hour when this specific customer has historically answered.
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px">
-          <div style="background:var(--s3);border-radius:6px;padding:8px 10px">
-            <div style="font-size:10px;font-weight:700;color:#14532D;margin-bottom:3px">Salaried</div>
-            <div style="font-size:10px;color:var(--muted)">HH:00 – HH+1:00 · <em>1–2 days post salary credit</em><br>Contacts just after salary arrives maximises payment probability.</div>
-          </div>
-          <div style="background:var(--s3);border-radius:6px;padding:8px 10px">
-            <div style="font-size:10px;font-weight:700;color:#9A3412;margin-bottom:3px">Self-Employed</div>
-            <div style="font-size:10px;color:var(--muted)">HH:00 – HH+1:00 · <em>Mid-month</em><br>Business cash flows are typically more stable mid-cycle.</div>
-          </div>
-        </div>
-      </div>
-
-      <div style="background:var(--s2);border-radius:9px;padding:14px;border-top:3px solid #EC4899">
-        <div style="font-size:11px;font-weight:700;color:#831843;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:10px">3 · Tone (3 types)</div>
-        <div style="font-size:11px;color:var(--muted);line-height:1.65;margin-bottom:10px">
-          Set by two signals from telecall data: <strong style="color:var(--text)">sentiment_score</strong> of the last call and whether <strong style="color:var(--text)">hardship was mentioned</strong>.
-        </div>
-        <div style="display:flex;flex-direction:column;gap:5px">
-          <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:6px;padding:7px 10px">
-            <div style="font-size:10px;font-weight:700;color:#9B1C1C">Vulnerability</div>
-            <div style="font-size:10px;color:var(--muted);margin-top:2px">hardship mentioned = true OR sentiment &gt; 0.65 · <em>Acknowledge before any ask</em></div>
-          </div>
-          <div style="background:rgba(236,72,153,0.09);border:1px solid rgba(236,72,153,0.2);border-radius:6px;padding:7px 10px">
-            <div style="font-size:10px;font-weight:700;color:#831843">Empathetic</div>
-            <div style="font-size:10px;color:var(--muted);margin-top:2px">sentiment score 0.40–0.65 · <em>Non-pressuring</em></div>
-          </div>
-          <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.18);border-radius:6px;padding:7px 10px">
-            <div style="font-size:10px;font-weight:700;color:#1E3A8A">Professional</div>
-            <div style="font-size:10px;color:var(--muted);margin-top:2px">sentiment score &lt; 0.40, no hardship · <em>Factual, solution-oriented</em></div>
-          </div>
-        </div>
-      </div>
-
-      <div style="background:var(--s2);border-radius:9px;padding:14px;border-top:3px solid #EAB308">
-        <div style="font-size:11px;font-weight:700;color:#713F12;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:10px">4 · Offer (4 types)</div>
-        <div style="font-size:11px;color:var(--muted);line-height:1.65;margin-bottom:10px">
-          Decided by checking <strong style="color:var(--text)">3 feature thresholds</strong> in order — first match wins.
-        </div>
-        <div style="display:flex;flex-direction:column;gap:5px">
-          <div style="background:rgba(239,68,68,0.09);border-radius:6px;padding:7px 10px;border-left:3px solid #EF4444">
-            <div style="font-size:10px;font-weight:700;color:#9B1C1C">EMI Restructure</div>
-            <div style="font-size:10px;color:var(--muted);margin-top:2px">debt_pressure_ratio &gt; 1.20 → EMIs exceed income. Reduce EMI 30%, extend tenure.</div>
-          </div>
-          <div style="background:rgba(249,115,22,0.09);border-radius:6px;padding:7px 10px;border-left:3px solid #F97316">
-            <div style="font-size:10px;font-weight:700;color:#9A3412">Payment Holiday</div>
-            <div style="font-size:10px;color:var(--muted);margin-top:2px">financial_cushion_trend &gt; 0.70 → Cushion almost gone. 1-month deferral, no penalty.</div>
-          </div>
-          <div style="background:rgba(234,179,8,0.09);border-radius:6px;padding:7px 10px;border-left:3px solid #EAB308">
-            <div style="font-size:10px;font-weight:700;color:#713F12">Partial Payment</div>
-            <div style="font-size:10px;color:var(--muted);margin-top:2px">recency_weighted_stress &gt; 0.75 → Recent stress high. Accept 50% now, rest in 15 days.</div>
-          </div>
-          <div style="background:rgba(34,197,94,0.09);border-radius:6px;padding:7px 10px;border-left:3px solid #22C55E">
-            <div style="font-size:10px;font-weight:700;color:#14532D">Standard Full EMI</div>
-            <div style="font-size:10px;color:var(--muted);margin-top:2px">None of the above apply. Full EMI by due date.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Charts row 1: Action distribution + Tone split -->
-  <div class="two-col" style="margin-bottom:12px">
-    <div class="card">
-      <div class="card-title"><span class="card-title-bar"></span>Recommendation Action Distribution</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">What the collections team needs to execute — sorted by volume</div>
-      <div class="chart-wrap" style="height:240px"><canvas id="rec-action-bar"></canvas></div>
-    </div>
-    <div class="card">
-      <div class="card-title"><span class="card-title-bar" style="background:#EC4899"></span>Intervention Tone Split</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Emotional calibration required — informs agent training and script selection</div>
-      <div class="chart-wrap" style="height:100px"><canvas id="rec-tone-bar"></canvas></div>
-      <div style="margin-top:14px;display:flex;flex-direction:column;gap:6px" id="rec-tone-detail"></div>
-    </div>
-  </div>
-
-  <!-- Charts row 2: Net benefit by action + Offer breakdown -->
-  <div class="two-col" style="margin-bottom:12px">
-    <div class="card">
-      <div class="card-title"><span class="card-title-bar" style="background:#22C55E"></span>Avg Net Benefit by Action Type</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Guides prioritisation — which action type delivers most value per account</div>
-      <div class="chart-wrap" style="height:240px"><canvas id="rec-value-bar"></canvas></div>
-    </div>
-    <div class="card">
-      <div class="card-title"><span class="card-title-bar" style="background:#EAB308"></span>Offer Type Breakdown</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Which negotiation scripts the team needs ready</div>
-      <div id="rec-offer-cards" style="display:flex;flex-direction:column;gap:8px"></div>
-    </div>
-  </div>
-
-  <!-- Cost vs Recovery by Action (full width) -->
-  <div class="card full-col" style="margin-bottom:12px">
-    <div class="card-title"><span class="card-title-bar" style="background:#60A5FA"></span>Intervention Cost vs Expected Recovery — by Action Type</div>
-    <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Justifies each action type financially — both axes show total INR across all accounts of that type</div>
-    <div class="chart-wrap" style="height:260px"><canvas id="rec-cost-bar"></canvas></div>
-    <div class="legend" style="margin-top:10px">
-      <span><i style="background:#60A5FA"></i>Intervention cost</span>
-      <span><i style="background:#34D399"></i>Expected recovery</span>
-    </div>
-  </div>
-
-  <!-- Feedback loop placeholders -->
-  <div class="two-col">
-    <div class="card" style="border-style:dashed;opacity:0.75">
-      <div class="card-title"><span class="card-title-bar" style="background:var(--muted)"></span>Action Taken on Recommendation</div>
-      <div style="text-align:center;padding:28px 16px">
-        <div style="font-size:28px;margin-bottom:10px">🔗</div>
-        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">Requires CRM Integration</div>
-        <div style="font-size:11px;color:var(--muted);line-height:1.6;max-width:320px;margin:0 auto">
-          This panel will show call completion rates, WhatsApp delivery status, and agent visit logs once the Collections CRM is connected via webhook.
-          <br><br>
-          <strong style="color:var(--muted)">Expected fields:</strong> call_completed · agent_visited · message_delivered · outcome_logged
-        </div>
-      </div>
-    </div>
-    <div class="card" style="border-style:dashed;opacity:0.75">
-      <div class="card-title"><span class="card-title-bar" style="background:var(--muted)"></span>Recommendation Outcome</div>
-      <div style="text-align:center;padding:28px 16px">
-        <div style="font-size:28px;margin-bottom:10px">📋</div>
-        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">Requires Payment Feedback Loop</div>
-        <div style="font-size:11px;color:var(--muted);line-height:1.6;max-width:320px;margin:0 auto">
-          This panel will show actual payment received, promise kept vs broken, offer accepted vs rejected, and actual vs expected recovery — once post-intervention payment data is piped back.
-          <br><br>
-          <strong style="color:var(--muted)">Expected fields:</strong> paid_after_intervention · amount_paid · offer_accepted · days_to_payment
-        </div>
-      </div>
-    </div>
-  </div>
-
-</div><!-- /.main -->
-</div><!-- /#tab-recommendations -->
 
 <!-- ── Upload Modal ─────────────────────────────────────────────── -->
 <div class="modal-backdrop" id="pipeline-modal">
@@ -1819,19 +825,6 @@ function animateTo(el, targetText, numeric) {
   requestAnimationFrame(tick);
 }
 
-// ── CSV loading ────────────────────────────────────────────────
-document.getElementById('csv-input').addEventListener('change', function(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  Papa.parse(file, {
-    header: true, skipEmptyLines: true, dynamicTyping: true,
-    complete(res) {
-      rawData = res.data;
-      document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleString();
-      renderAll(recalculate(rawData));
-    }
-  });
-});
 
 function autoLoadCSV() {
   fetch('earlyguard_predictions.csv')
@@ -1849,7 +842,7 @@ function autoLoadCSV() {
     .catch(() => {});
 }
 
-document.addEventListener('DOMContentLoaded', () => { initAllSliders(); autoLoadCSV(); autoLoadSurvival(); autoLoadValidation(); });
+document.addEventListener('DOMContentLoaded', () => { initAllSliders(); autoLoadCSV(); autoLoadValidation(); });
 
 document.querySelectorAll('.settings-panel input[type=range]').forEach(inp => {
   inp.addEventListener('input', () => { if (rawData) renderAll(recalculate(rawData)); });
@@ -1862,68 +855,55 @@ function renderAll(data) {
   renderKPIs(data);
   renderCharts(data);
   renderTable(data);
-  ['rec-action-bar','rec-tone-bar','rec-value-bar','rec-cost-bar'].forEach(id => destroyChart(id));
-  if (document.getElementById('tab-recommendations').classList.contains('active')) renderRecommendations(data);
+
 }
 
 function renderKPIs(data) {
   const EARLY_COST   = 1.50;
-  const DEFAULT_COST = 11.50;
+  const DEFAULT_COST = 101.50;
   const CONV_RATE    = 0.40;
+  const BASELINE_BAD = 0.50;
+  const LOAN_PER_ACC = 100000;
 
   const total   = data.length;
   const crit    = data.filter(r => (v(r,'risk_tier')||'').toString().toUpperCase()==='CRITICAL').length;
   const high    = data.filter(r => (v(r,'risk_tier')||'').toString().toUpperCase()==='HIGH').length;
+  const flagged = crit + high;
   const avgP    = data.reduce((s,r) => s + num(v(r,'prob_30d')), 0) / total;
   const avgP60  = data.reduce((s,r) => s + num(v(r,'prob_60d')), 0) / total;
-  const totNB   = data.reduce((s,r) => s + num(v(r,'net_benefit')), 0);
-  const totIC   = data.reduce((s,r) => s + num(v(r,'intervention_cost')), 0);
-  const roi     = totIC > 0 ? (totNB / totIC) * 100 : 0;
-  const flagged = crit + high;
-  const saved   = Math.round(flagged * CONV_RATE);
 
-  document.getElementById('k-total').textContent    = total.toLocaleString();
-  document.getElementById('k-high').textContent     = flagged.toLocaleString();
-  document.getElementById('k-high-pct').textContent = pct(flagged/total) + ' of portfolio';
+  // Business case numbers
+  const saved       = Math.round(flagged * CONV_RATE);          // accounts recovered
+  const badCount    = Math.round(flagged * BASELINE_BAD);       // would default without EW
+  const loanLost    = badCount  * LOAN_PER_ACC;                 // loan $ lost without EW
+  const loanSaved   = saved     * LOAN_PER_ACC;                 // loan $ protected with EW
+  const opsWithout  = badCount  * DEFAULT_COST;                 // ops cost without EW (only defaulters)
+  const opsWith     = flagged   * EARLY_COST + (badCount - saved) * DEFAULT_COST; // early alert all + agent only for remaining defaulters
+  const opsSaved    = opsWithout - opsWith;
+  const totalBenefit= loanSaved + opsSaved;
+  const roi         = loanLost > 0 ? Math.round(totalBenefit / loanLost * 100) : 0;
+
+  // KPI strip
+  document.getElementById('k-total').textContent       = total.toLocaleString();
+  document.getElementById('k-high').textContent        = flagged.toLocaleString();
+  document.getElementById('k-high-pct').textContent    = pct(flagged/total) + ' of portfolio';
   document.getElementById('k-avg-prob').textContent    = pct(avgP);
   document.getElementById('k-avg-prob-60').textContent = pct(avgP60);
-  animateTo(document.getElementById('k-net-benefit'), fmtINR(totNB), totNB);
-  document.getElementById('k-roi').textContent      = Math.round(roi) + '%';
-  document.getElementById('k-worth').textContent    = saved.toLocaleString();
+  document.getElementById('k-worth').textContent       = saved.toLocaleString();
+  document.getElementById('k-loan-protected').textContent = fmtINR(loanSaved);
 
-  // ROI panel
-  const intCost    = flagged * EARLY_COST;
-  const avoidedCost = saved * DEFAULT_COST;
-  const opsSaved   = saved * (DEFAULT_COST - EARLY_COST);
-  const opsRoi     = intCost > 0 ? Math.round((avoidedCost - intCost) / intCost * 100) : 0;
-  const avgOut     = data.reduce((s,r) => s + num(v(r,'outstanding')), 0) / total;
-  const portfolio  = saved * avgOut;
-
-  document.getElementById('roi-flagged').textContent       = flagged.toLocaleString();
-  document.getElementById('roi-converted').textContent     = saved.toLocaleString();
-  document.getElementById('roi-int-cost').textContent      = fmtINR(intCost);
-  document.getElementById('roi-avoided').textContent       = fmtINR(avoidedCost);
-  document.getElementById('roi-pct').textContent           = opsRoi + '%';
-  document.getElementById('roi-converted-inline').textContent = saved.toLocaleString();
-  document.getElementById('roi-ops-saved').textContent     = fmtINR(opsSaved);
-  document.getElementById('roi-portfolio').textContent     = fmtINR(portfolio);
-
-  // ── Loan Amount ROI ─────────────────────────────────────────────
-  const STANDARD_LOAN   = 100000;   // ₹1 lakh per account (mock standard)
-  const BASELINE_BAD    = 0.50;     // 50% would default without early warning
-  const badAccounts     = Math.round(flagged * BASELINE_BAD);
-  const atRiskAmount    = badAccounts * STANDARD_LOAN;
-  const savedAmount     = saved * STANDARD_LOAN;
-  const loanRoiPct      = atRiskAmount > 0 ? Math.round((savedAmount / atRiskAmount) * 100) : 0;
-
-  document.getElementById('loan-roi-flagged').textContent     = flagged.toLocaleString();
-  document.getElementById('loan-roi-flagged2').textContent    = flagged.toLocaleString();
-  document.getElementById('loan-roi-bad').textContent         = badAccounts.toLocaleString();
-  document.getElementById('loan-roi-atrisk').textContent      = fmtINR(atRiskAmount);
-  document.getElementById('loan-roi-saved-count').textContent = saved.toLocaleString();
-  document.getElementById('loan-roi-protected').textContent   = fmtINR(savedAmount);
-  document.getElementById('loan-roi-saved-amount').textContent= fmtINR(savedAmount);
-  document.getElementById('loan-roi-pct').textContent         = loanRoiPct + '%';
+  // Business case card
+  document.getElementById('bc-flagged').textContent    = flagged.toLocaleString();
+  document.getElementById('bc-flagged2').textContent   = flagged.toLocaleString();
+  document.getElementById('bc-bad-count').textContent  = badCount.toLocaleString();
+  document.getElementById('bc-ops-without').textContent= fmtINR(opsWithout);
+  document.getElementById('bc-loan-lost').textContent  = fmtINR(loanLost);
+  document.getElementById('bc-saved-count').textContent= saved.toLocaleString();
+  document.getElementById('bc-ops-with').textContent   = fmtINR(Math.round(opsWith));
+  document.getElementById('bc-loan-saved').textContent = fmtINR(loanSaved);
+  document.getElementById('bc-net-loan').textContent   = fmtINR(loanSaved);
+  document.getElementById('bc-ops-saved').textContent  = fmtINR(Math.round(opsSaved));
+  document.getElementById('bc-roi-pct').textContent    = roi + '%';
 }
 
 function renderCharts(data) {
@@ -1933,8 +913,60 @@ function renderCharts(data) {
   const L = data.filter(r=>(v(r,'risk_tier')||'').toString().toUpperCase()==='LOW').length;
   renderDonut(C,H,M,L);
   renderHorizonBar(data);
-  renderProbHist(data);
-  renderWaterfall(data);
+  renderImpactChart(C+H);
+}
+
+function renderImpactChart(flagged) {
+  const BASELINE = 0.50, CONV = 0.40, LOAN = 100000;
+  const badCount  = Math.round(flagged * BASELINE);
+  const saved     = Math.round(flagged * CONV);
+  const stillBad  = badCount - saved;
+
+  destroyChart('impact-chart');
+  const ctx = document.getElementById('impact-chart');
+  if (!ctx) return;
+  charts['impact-chart'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Without EarlyGuard', 'With EarlyGuard'],
+      datasets: [
+        {
+          label: 'Would default',
+          data: [badCount, stillBad],
+          backgroundColor: ['rgba(239,68,68,0.75)', 'rgba(239,68,68,0.35)'],
+          borderColor:     ['#EF4444', '#EF4444'],
+          borderWidth: 1, borderRadius: 5,
+        },
+        {
+          label: 'Recovered by early action',
+          data: [0, saved],
+          backgroundColor: ['rgba(34,197,94,0)', 'rgba(34,197,94,0.75)'],
+          borderColor:     ['transparent', '#22C55E'],
+          borderWidth: 1, borderRadius: 5,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const val = ctx.raw;
+              const loanAmt = fmtINR(val * LOAN);
+              return ` ${ctx.dataset.label}: ${val.toLocaleString()} accounts (${loanAmt} loan)`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { stacked: true, grid: { display: false }, ticks: { color: '#7A8CA8', font: { size: 11 } } },
+        y: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)' },
+             ticks: { color: '#7A8CA8', font: { size: 10 } } }
+      }
+    }
+  });
 }
 
 // ── Inline editing ─────────────────────────────────────────────
@@ -2112,129 +1144,9 @@ function switchTab(name) {
   document.querySelector(`.tab-btn[onclick="switchTab('${name}')"]`).classList.add('active');
   document.getElementById('tab-' + name).classList.add('active');
   // Lazy-load JSON data when tabs are first opened
-  if (name === 'survival' && !survivalData) autoLoadSurvival();
   if (name === 'validation' && !validationData) autoLoadValidation();
   // Resize charts that were hidden during render
-  if (name === 'survival' && survivalData && !charts['km']) renderSurvival(survivalData);
   if (name === 'validation' && validationData && !charts['roc']) renderValidation(validationData);
-  if (name === 'recommendations' && currentData) renderRecommendations(currentData);
-}
-
-// ── Survival Analysis ──────────────────────────────────────────
-let survivalData = null;
-
-function autoLoadSurvival() {
-  fetch('survival_curves.json')
-    .then(r => { if (!r.ok) throw 0; return r.json(); })
-    .then(data => {
-      survivalData = data;
-      if (document.getElementById('tab-survival').classList.contains('active')) renderSurvival(data);
-    })
-    .catch(() => {});
-}
-
-function renderSurvival(d) {
-  document.getElementById('sv-total').textContent = d.total_accounts.toLocaleString();
-  document.getElementById('sv-events').textContent = d.total_events.toLocaleString();
-  document.getElementById('sv-event-rate').textContent = (d.total_events / d.total_accounts * 100).toFixed(1) + '% event rate';
-  document.getElementById('sv-concordance').textContent = d.cox_ph.concordance.toFixed(3);
-  document.getElementById('sv-pvalue').textContent = d.logrank.multivariate.p_value_fmt;
-  document.getElementById('sv-sig').textContent = d.logrank.multivariate.significant ? 'Significant (p < 0.05)' : 'Not significant';
-  renderKMChart(d);
-  renderSurvivalTierTable(d);
-  renderSurvivalTests(d);
-  renderAtRiskTable(d);
-}
-
-function renderKMChart(d) {
-  destroyChart('km');
-  const TIER_ORDER = ['Critical','High','Medium','Low'];
-  const datasets = TIER_ORDER.filter(t => d.curves[t]).map(t => {
-    const c = d.curves[t];
-    return {
-      label: t,
-      data: c.timeline.map((x, i) => ({ x, y: c.survival[i] })),
-      borderColor: c.color,
-      fill: false, stepped: 'before', borderWidth: 2.5, pointRadius: 0, tension: 0,
-    };
-  });
-  charts['km'] = new Chart(document.getElementById('km-chart').getContext('2d'), {
-    type: 'line', data: { datasets },
-    options: {
-      responsive: true, maintainAspectRatio: false, parsing: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: { backgroundColor:'#FFFFFF', borderColor:'rgba(0,0,0,0.12)', borderWidth:1,
-          callbacks: { label: c => ` ${c.dataset.label}: ${(c.parsed.y*100).toFixed(1)}% at day ${c.parsed.x.toFixed(0)}` } }
-      },
-      scales: {
-        x: { type:'linear', title:{display:true,text:'Days',color:'#5A6D85',font:{size:11}},
-          grid:{color:'rgba(0,0,0,0.07)'}, ticks:{color:'#5A6D85'}, min:0, max:95 },
-        y: { title:{display:true,text:'Survival Probability',color:'#5A6D85',font:{size:11}},
-          grid:{color:'rgba(0,0,0,0.07)'}, ticks:{color:'#5A6D85',callback:v=>(v*100).toFixed(0)+'%'}, min:0, max:1 }
-      }
-    }
-  });
-  document.getElementById('km-legend').innerHTML = TIER_ORDER.filter(t => d.curves[t]).map(t => {
-    const ts = d.tier_summary[t] || {};
-    return `<span><i style="background:${d.curves[t].color};border-radius:2px;width:18px;height:3px;display:inline-block;vertical-align:middle;margin-right:4px"></i>${t} (${(ts.events||0)}/${(ts.n||0)} events)</span>`;
-  }).join('');
-}
-
-function renderSurvivalTierTable(d) {
-  document.getElementById('sv-tier-tbody').innerHTML = ['Critical','High','Medium','Low']
-    .filter(t => d.tier_summary[t]).map(t => {
-      const ts = d.tier_summary[t];
-      const med = ts.median_days != null ? ts.median_days.toFixed(1) + 'd' : 'Not reached';
-      const tu = t.toUpperCase();
-      return `<tr>
-        <td><span class="badge ${tu}"><span class="bdot"></span>${tu}</span></td>
-        <td>${ts.n.toLocaleString()}</td>
-        <td>${ts.events.toLocaleString()}</td>
-        <td>${(ts.default_rate*100).toFixed(1)}%</td>
-        <td>${med}</td>
-      </tr>`;
-    }).join('');
-}
-
-function renderSurvivalTests(d) {
-  const lr = d.logrank, cox = d.cox_ph;
-  const topHRs = Object.entries(cox.hazard_ratios)
-    .sort((a,b) => Math.abs(b[1]-1) - Math.abs(a[1]-1)).slice(0, 5);
-  document.getElementById('sv-tests-content').innerHTML = `
-    <div style="margin-bottom:16px">
-      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Log-rank Tests</div>
-      <div style="display:flex;flex-direction:column;gap:5px;font-size:12px">
-        ${[['Multivariate (all tiers)',lr.multivariate],['High vs Low',lr.high_vs_low],['Critical vs Low',lr.critical_vs_low]]
-          .map(([label,res]) => `<div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--s2);border-radius:6px">
-            <span style="color:var(--muted)">${label}</span>
-            <span>${res.p_value_fmt} ${res.significant ? '<span class="pf-pass">SIG</span>' : ''}</span>
-          </div>`).join('')}
-      </div>
-    </div>
-    <div>
-      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Top Hazard Ratios (Cox PH · C=${cox.concordance.toFixed(3)})</div>
-      <div style="display:flex;flex-direction:column;gap:4px;font-size:11.5px">
-        ${topHRs.map(([f,hr]) => `
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 10px;background:var(--s2);border-radius:5px">
-            <span style="color:var(--muted)">${f.replace(/_score|_ratio|_signal|_trend/g,'').replace(/_/g,' ')}</span>
-            <span style="font-weight:700;color:${hr>1?'#9B1C1C':'#14532D'}">HR ${hr.toFixed(3)}</span>
-          </div>`).join('')}
-      </div>
-    </div>`;
-}
-
-function renderAtRiskTable(d) {
-  const tiers = ['Critical','High','Medium','Low'].filter(t => d.at_risk_table[t]);
-  const cps = d.checkpoints;
-  document.getElementById('at-risk-head').innerHTML = `<tr><th>Tier</th>${cps.map(c=>`<th>Day ${c}</th>`).join('')}</tr>`;
-  document.getElementById('at-risk-body').innerHTML = tiers.map(t => {
-    const row = d.at_risk_table[t], tu = t.toUpperCase();
-    return `<tr>
-      <td><span class="badge ${tu}"><span class="bdot"></span>${tu}</span></td>
-      ${cps.map(c=>`<td>${(row[String(c)]??'—').toLocaleString()}</td>`).join('')}
-    </tr>`;
-  }).join('');
 }
 
 // ── Model Validation ───────────────────────────────────────────
@@ -2396,506 +1308,191 @@ function renderTable(data) {
   tbody.querySelectorAll('td.editable').forEach(td=>td.addEventListener('click',()=>startEdit(td)));
 }
 
-// ── Recommendations tab ────────────────────────────────────────
-const ACTION_COLORS = {
-  'EMI Relief':           '#EF4444',
-  'Hardship Call':        '#F97316',
-  'Empathy Outreach':     '#EC4899',
-  'PTP Re-engagement':    '#A78BFA',
-  'Payment Reminder':     '#3B82F6',
-  'Bureau Alert':         '#06B6D4',
-  'Contact Re-engagement':'#EAB308',
-  'Stability Check-in':   '#22C55E',
-  'Standard Follow-up':   '#64748B',
-};
-
-function renderRecommendations(data) {
-  const hc = data.filter(r => {
-    const t = r[cfg.col.risk_tier];
-    return t === 'High' || t === 'Critical';
-  });
-
-  // KPIs
-  document.getElementById('rec-header-count').textContent =
-    ` · ${hc.length.toLocaleString()} accounts in scope`;
-  document.getElementById('rec-k-total').textContent = hc.length.toLocaleString();
-
-  // Action counts
-  const actionCounts = {};
-  const actionNetBenefit = {};
-  const actionCost = {};
-  const actionRecovery = {};
-  hc.forEach(r => {
-    const a = r[cfg.col.recommendation] || 'Standard Follow-up';
-    actionCounts[a] = (actionCounts[a] || 0) + 1;
-    actionNetBenefit[a] = (actionNetBenefit[a] || 0) + num(r[cfg.col.net_benefit]);
-    actionCost[a]     = (actionCost[a] || 0) + num(r[cfg.col.intervention_cost]);
-    actionRecovery[a] = (actionRecovery[a] || 0) + num(r[cfg.col.recovery_cost]);
-  });
-
-  const sortedActions = Object.entries(actionCounts).sort((a, b) => b[1] - a[1]);
-  const topAction = sortedActions[0]?.[0] || '—';
-  document.getElementById('rec-k-top-action').textContent =
-    `${topAction} (${(sortedActions[0]?.[1] || 0).toLocaleString()} accounts)`;
-
-  // Tone counts
-  const toneCounts = { Vulnerability: 0, Empathetic: 0, Professional: 0 };
-  hc.forEach(r => {
-    const t = r['intervention_tone'] || 'Professional';
-    if (toneCounts[t] !== undefined) toneCounts[t]++;
-    else toneCounts['Professional']++;
-  });
-  document.getElementById('rec-k-vuln').textContent =
-    toneCounts['Vulnerability'].toLocaleString();
-
-  // Offer counts
-  const offerCounts = {};
-  hc.forEach(r => {
-    const o = r['intervention_offer'] || 'Standard Full EMI';
-    offerCounts[o] = (offerCounts[o] || 0) + 1;
-  });
-  const restructureCount = offerCounts['EMI Restructure'] || 0;
-  document.getElementById('rec-k-restructure').textContent =
-    restructureCount.toLocaleString();
-
-  const totalRecovery = hc.reduce((s, r) => s + num(r[cfg.col.recovery_cost]), 0);
-  document.getElementById('rec-k-recovery').textContent = fmtINR(totalRecovery);
-
-  // Render sub-charts
-  renderActionDist(hc, sortedActions, actionCounts);
-  renderToneDist(hc, toneCounts);
-  renderActionValue(hc, sortedActions, actionNetBenefit, actionCounts);
-  renderActionCostVsRecovery(sortedActions, actionCost, actionRecovery);
-  renderOfferCards(offerCounts, hc.length);
-}
-
-function renderActionDist(hc, sortedActions, actionCounts) {
-  const labels = sortedActions.map(([a]) => a);
-  const vals   = sortedActions.map(([, c]) => c);
-  const colors = labels.map(l => ACTION_COLORS[l] || '#64748B');
-  const pcts   = vals.map(v => ((v / hc.length) * 100).toFixed(1));
-
-  const ctx = document.getElementById('rec-action-bar');
-  if (!ctx) return;
-  destroyChart('rec-action-bar');
-  charts['rec-action-bar'] = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        data: vals,
-        backgroundColor: colors.map(c => c + 'CC'),
-        borderColor: colors,
-        borderWidth: 1,
-        borderRadius: 4,
-      }]
-    },
-    options: {
-      indexAxis: 'y',
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: (ctx) => {
-              const i = ctx.dataIndex;
-              return ` ${vals[i].toLocaleString()} accounts (${pcts[i]}%)`;
-            }
-          }
-        }
-      },
-      scales: {
-        x: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { font: { size: 10 } } },
-        y: { grid: { display: false }, ticks: { font: { size: 10 } } }
-      }
-    }
-  });
-}
-
-function renderToneDist(hc, toneCounts) {
-  const tones  = ['Vulnerability', 'Empathetic', 'Professional'];
-  const colors = ['#EF4444', '#EC4899', '#3B82F6'];
-  const vals   = tones.map(t => toneCounts[t] || 0);
-  const total  = hc.length;
-
-  const ctx = document.getElementById('rec-tone-bar');
-  if (!ctx) return;
-  destroyChart('rec-tone-bar');
-  charts['rec-tone-bar'] = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: tones,
-      datasets: [{
-        data: vals,
-        backgroundColor: colors.map(c => c + 'CC'),
-        borderColor: colors,
-        borderWidth: 1,
-        borderRadius: 4,
-      }]
-    },
-    options: {
-      indexAxis: 'y',
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: {
-        callbacks: { label: (ctx) => ` ${vals[ctx.dataIndex].toLocaleString()} accounts` }
-      }},
-      scales: {
-        x: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { font: { size: 10 } } },
-        y: { grid: { display: false }, ticks: { font: { size: 10 } } }
-      }
-    }
-  });
-
-  const toneDesc = {
-    Vulnerability: { color: '#9B1C1C', desc: 'hardship mentioned or distress score &gt; 0.65 — acknowledge before any ask' },
-    Empathetic:    { color: '#831843', desc: 'sentiment score 0.40–0.65 — non-pressuring, solution-focused' },
-    Professional:  { color: '#1E3A8A', desc: 'sentiment &lt; 0.40, no hardship — factual and direct' },
-  };
-  const detail = document.getElementById('rec-tone-detail');
-  if (detail) {
-    detail.innerHTML = tones.map((t, i) => `
-      <div style="display:flex;justify-content:space-between;align-items:center;background:var(--s2);border-radius:6px;padding:7px 12px;border-left:3px solid ${colors[i]}">
-        <div>
-          <div style="font-size:11px;font-weight:700;color:${toneDesc[t].color}">${t}</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:2px">${toneDesc[t].desc}</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:14px;font-weight:800;color:${toneDesc[t].color}">${vals[i].toLocaleString()}</div>
-          <div style="font-size:10px;color:var(--muted)">${total > 0 ? ((vals[i]/total)*100).toFixed(1) : 0}%</div>
-        </div>
-      </div>`).join('');
-  }
-}
-
-function renderActionValue(hc, sortedActions, actionNetBenefit, actionCounts) {
-  const labels  = sortedActions.map(([a]) => a);
-  const avgNets = labels.map(a => {
-    const cnt = actionCounts[a] || 1;
-    return Math.round((actionNetBenefit[a] || 0) / cnt);
-  });
-  const colors = labels.map(l => ACTION_COLORS[l] || '#64748B');
-
-  const ctx = document.getElementById('rec-value-bar');
-  if (!ctx) return;
-  destroyChart('rec-value-bar');
-  charts['rec-value-bar'] = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Avg net benefit (₹)',
-        data: avgNets,
-        backgroundColor: avgNets.map((v, i) => v >= 0 ? colors[i] + 'BB' : '#EF444466'),
-        borderColor:      avgNets.map((v, i) => v >= 0 ? colors[i] : '#EF4444'),
-        borderWidth: 1,
-        borderRadius: 4,
-      }]
-    },
-    options: {
-      indexAxis: 'y',
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: (ctx) => ` Avg ₹${avgNets[ctx.dataIndex].toLocaleString()} / account`
-          }
-        }
-      },
-      scales: {
-        x: {
-          grid: { color: 'rgba(0,0,0,0.06)' },
-          ticks: { font: { size: 10 }, callback: v => '₹' + v.toLocaleString() }
-        },
-        y: { grid: { display: false }, ticks: { font: { size: 10 } } }
-      }
-    }
-  });
-}
-
-function renderActionCostVsRecovery(sortedActions, actionCost, actionRecovery) {
-  const labels   = sortedActions.map(([a]) => a);
-  const costs    = labels.map(a => Math.round(actionCost[a] || 0));
-  const recovery = labels.map(a => Math.round(actionRecovery[a] || 0));
-
-  const ctx = document.getElementById('rec-cost-bar');
-  if (!ctx) return;
-  destroyChart('rec-cost-bar');
-  charts['rec-cost-bar'] = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'Intervention cost',
-          data: costs,
-          backgroundColor: '#60A5FA99',
-          borderColor: '#60A5FA',
-          borderWidth: 1,
-          borderRadius: 3,
-        },
-        {
-          label: 'Expected recovery',
-          data: recovery,
-          backgroundColor: '#34D39999',
-          borderColor: '#34D399',
-          borderWidth: 1,
-          borderRadius: 3,
-        }
-      ]
-    },
-    options: {
-      indexAxis: 'y',
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: (ctx) => ` ${ctx.dataset.label}: ₹${ctx.raw.toLocaleString()}`
-          }
-        }
-      },
-      scales: {
-        x: {
-          grid: { color: 'rgba(0,0,0,0.06)' },
-          ticks: { font: { size: 10 }, callback: v => '₹' + (v/1000).toFixed(0) + 'K' }
-        },
-        y: { grid: { display: false }, ticks: { font: { size: 10 } } }
-      }
-    }
-  });
-}
-
-function renderOfferCards(offerCounts, total) {
-  const offers = [
-    { name: 'EMI Restructure',  color: '#EF4444', border: '#EF4444',
-      desc: 'Debt pressure &gt; 1.20 — reduce EMI 30%, extend tenure' },
-    { name: 'Payment Holiday',  color: '#9A3412', border: '#F97316',
-      desc: 'Cushion trend &gt; 0.70 — 1-month deferral, no penalty' },
-    { name: 'Partial Payment',  color: '#713F12', border: '#EAB308',
-      desc: 'Recency stress &gt; 0.75 — accept 50% now, rest in 15 days' },
-    { name: 'Standard Full EMI',color: '#14532D', border: '#22C55E',
-      desc: 'No threshold triggered — full EMI by due date' },
-  ];
-  const el = document.getElementById('rec-offer-cards');
-  if (!el) return;
-  el.innerHTML = offers.map(o => {
-    const cnt = offerCounts[o.name] || 0;
-    const pct = total > 0 ? ((cnt / total) * 100).toFixed(1) : '0.0';
-    const barW = total > 0 ? Math.round((cnt / total) * 100) : 0;
-    return `
-      <div style="background:var(--s2);border-radius:7px;padding:10px 13px;border-left:3px solid ${o.border}">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px">
-          <span style="font-size:11px;font-weight:700;color:${o.color}">${o.name}</span>
-          <span style="font-size:12px;font-weight:800;color:${o.color}">${cnt.toLocaleString()} <span style="font-size:10px;font-weight:500;color:var(--muted)">(${pct}%)</span></span>
-        </div>
-        <div style="background:rgba(255,255,255,0.06);border-radius:3px;height:4px;margin-bottom:6px">
-          <div style="background:${o.border};height:4px;border-radius:3px;width:${barW}%"></div>
-        </div>
-        <div style="font-size:10px;color:var(--muted)">${o.desc}</div>
-      </div>`;
-  }).join('');
-}
-
-// ── Pipeline Upload ────────────────────────────────────────────
-const PIPELINE_FILES = [
-  { key: 'loan',     label: 'Loan Accounts',    hint: 'loan_accounts.csv',    required: true  },
-  { key: 'payment',  label: 'Payment History',  hint: 'payment_history.csv',  required: false },
-  { key: 'bank',     label: 'Bank Statements',  hint: 'bank_statement.csv',   required: false },
-  { key: 'bureau',   label: 'Bureau Data',      hint: 'bureau_data.csv',      required: false },
-  { key: 'telecall', label: 'Telecall History', hint: 'telecall_history.csv', required: false },
-  { key: 'epfo',     label: 'EPFO Data',        hint: 'epfo_data.csv',        required: false },
+// ── Pipeline modal ─────────────────────────────────────────────
+const FILE_DEFS = [
+  { key:'loan',     label:'Loan Accounts',    icon:'🏦', required:true  },
+  { key:'bank',     label:'Bank Statement',   icon:'🏧', required:false },
+  { key:'bureau',   label:'Bureau Data',      icon:'📊', required:false },
+  { key:'telecall', label:'Telecall History', icon:'📞', required:false },
+  { key:'epfo',     label:'EPFO / Employment',icon:'📋', required:false },
+  { key:'payment',  label:'Payment History',  icon:'💳', required:false },
 ];
-const fileInputs = {};
+const fileStore = {};   // key → File
 
 function openPipelineModal() {
-  const grid = document.getElementById('file-grid');
-  grid.innerHTML = PIPELINE_FILES.map(f => `
-    <div class="file-row">
-      <span class="file-label">${f.label}${f.required ? ' <span style="color:var(--crit)">*</span>' : ' <span style="color:var(--muted);font-weight:400">optional</span>'}</span>
-      <label class="file-pick" id="fp-label-${f.key}">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        <span id="fp-name-${f.key}">${f.hint}</span>
-        <input type="file" accept=".csv" onchange="onFileSelect('${f.key}', this)">
-      </label>
-      <span class="file-err" id="fp-err-${f.key}"></span>
-    </div>`).join('');
+  renderFileGrid();
   document.getElementById('pipeline-modal').classList.add('open');
 }
-
 function closePipelineModal() {
   document.getElementById('pipeline-modal').classList.remove('open');
 }
+document.getElementById('pipeline-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('pipeline-modal')) closePipelineModal();
+});
 
-const FILE_SIGNATURES = {
-  loan:     ["loan_amount_inr","product_type","outstanding_balance_inr","emi_amount_inr","dpd_at_snapshot","loan_tenure_months","sanctioned_amount_inr"],
-  bank:     ["statement_month","net_monthly_surplus","total_monthly_inflow","expense_to_income_ratio","days_balance_near_zero","salary_credit_delay_days","emi_outflow_other_lenders","business_upi_inflow_trend"],
-  bureau:   ["bureau_pull_date","credit_score_current","credit_score_6m_ago","missed_payments_other_lenders_6m","hard_enquiries_30d"],
-  telecall: ["contact_month","response_rate_30d","consecutive_unanswered_count","sentiment_score_last_call","ptp_made","ptp_fulfillment_rate","hardship_mentioned","days_since_last_contact","ptp_broken_count_6m"],
-  epfo:     ["epfo_pull_date","zero_contribution_months_last_6m","job_change_detected","itr_filed_flag","gst_filing_status","days_since_last_contribution"],
-  payment:  ["payment_month","payment_due_date","emi_amount","payment_status","payment_amount","days_late","partial_payment_ratio","PAYMENT_DATE","PAYMENT_DUE_DATE","EMI_AMOUNT","PAYMENT_STATUS"],
-};
-const FILE_LABELS = { loan:"Loan Accounts", bank:"Bank Statement", bureau:"Bureau Data", telecall:"Telecall History", epfo:"EPFO Data", payment:"Payment History" };
-
-function _checkSignature(key, cols) {
-  const sig  = FILE_SIGNATURES[key];
-  const hits = sig.filter(c => cols.has(c)).length;
-  if (hits >= 2) return null;
-  // Wrong-file detection
-  let bestKey = null, bestHits = 0;
-  for (const [k, s] of Object.entries(FILE_SIGNATURES)) {
-    if (k === key) continue;
-    const h = s.filter(c => cols.has(c)).length;
-    if (h > bestHits) { bestHits = h; bestKey = k; }
-  }
-  const hint = (bestKey && bestHits >= 2) ? ` — looks like ${FILE_LABELS[bestKey]}` : '';
-  return `Wrong file for "${FILE_LABELS[key]}"${hint}. Expected: ${sig.slice(0,3).join(', ')}…`;
+function renderFileGrid() {
+  const grid = document.getElementById('file-grid');
+  grid.innerHTML = FILE_DEFS.map(def => {
+    const f = fileStore[def.key];
+    const hasFile = !!f;
+    return `
+    <div class="file-row" id="row-${def.key}">
+      <div class="file-label">${def.icon} ${def.label}${def.required ? ' <span style="color:#DC2626">*</span>' : ''}</div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <label class="file-pick${hasFile ? ' selected' : ''}" id="pick-${def.key}" style="flex:1;min-width:0">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span id="name-${def.key}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0">${hasFile ? f.name : 'Click to upload CSV'}</span>
+          <input type="file" accept=".csv" onchange="handleFile('${def.key}',this)">
+        </label>
+        <button class="file-remove" id="remove-${def.key}" title="Remove file" onclick="removeFile(event,'${def.key}')" style="display:${hasFile ? 'flex' : 'none'}">✕</button>
+      </div>
+      <div class="file-err" id="err-${def.key}"></div>
+    </div>`;
+  }).join('');
+  updateRunBtn();
 }
 
-function onFileSelect(key, input) {
-  const file  = input.files[0];
-  const label = document.getElementById(`fp-label-${key}`);
-  const name  = document.getElementById(`fp-name-${key}`);
-  const errEl = document.getElementById(`fp-err-${key}`);
+function handleFile(key, input) {
+  const file = input.files[0];
   if (!file) return;
-
+  fileStore[key] = file;
+  const pick   = document.getElementById('pick-'   + key);
+  const name   = document.getElementById('name-'   + key);
+  const err    = document.getElementById('err-'    + key);
+  const removeBtn = document.getElementById('remove-' + key);
+  pick.classList.remove('error');
+  pick.classList.add('selected');
   name.textContent = file.name;
-  label.classList.remove('selected','error');
-  errEl.textContent = '';
+  err.textContent  = '';
+  if (removeBtn) removeBtn.style.display = 'flex';
 
-  Papa.parse(file, {
-    preview: 1,
-    complete(results) {
-      const cols = new Set((results.data[0] || []).map(c => c.trim()));
-      const err  = _checkSignature(key, cols);
-      if (err) {
-        label.classList.add('error');
-        errEl.textContent = err;
-        fileInputs[key] = null;
-      } else {
-        label.classList.add('selected');
-        fileInputs[key] = file;
-      }
-    },
-    error() {
-      label.classList.add('error');
-      errEl.textContent = 'Could not read file — is it a valid CSV?';
-      fileInputs[key] = null;
+  // Validate header row in browser before submit
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const firstLine = (ev.target.result || '').split('\n')[0] || '';
+    const cols = firstLine.split(',').map(c => c.trim().replace(/^"|"$/g,'').toLowerCase());
+    if (cols.length < 2) {
+      pick.classList.replace('selected','error');
+      err.textContent = 'Could not read columns — is this a valid CSV?';
+      if (removeBtn) removeBtn.style.display = 'none';
+      delete fileStore[key];
     }
-  });
+    updateRunBtn();
+  };
+  reader.readAsText(file.slice(0, 2048));
 }
 
-function setStep(stage) {
-  const MAP = { inference: [25,'ps-inference'], validation: [55,'ps-validation'], survival: [80,'ps-survival'], done: [100,'ps-done'], error: [100, null] };
-  const [pct, activeId] = MAP[stage] || [0, null];
-  document.getElementById('prog-bar').style.width = pct + '%';
-  ['ps-inference','ps-validation','ps-survival','ps-done'].forEach(id => {
-    const el = document.getElementById(id);
-    el.className = 'pstep';
-    const order = ['ps-inference','ps-validation','ps-survival','ps-done'];
-    const activeIdx = activeId ? order.indexOf(activeId) : -1;
-    const myIdx = order.indexOf(id);
-    if (myIdx < activeIdx) el.classList.add('done');
-    else if (id === activeId) el.classList.add('active');
-  });
+function removeFile(e, key) {
+  e.preventDefault();
+  e.stopPropagation();
+  delete fileStore[key];
+  const pick      = document.getElementById('pick-'   + key);
+  const name      = document.getElementById('name-'   + key);
+  const err       = document.getElementById('err-'    + key);
+  const removeBtn = document.getElementById('remove-' + key);
+  pick.classList.remove('selected','error');
+  name.textContent = 'Click to upload CSV';
+  err.textContent  = '';
+  if (removeBtn) removeBtn.style.display = 'none';
+  pick.querySelector('input[type=file]').value = '';
+  updateRunBtn();
 }
 
-let _pollTimer = null;
+function updateRunBtn() {
+  const btn = document.getElementById('run-btn');
+  const ready = !!fileStore['loan'];
+  btn.disabled = !ready;
+  btn.style.opacity = ready ? '1' : '0.45';
+  btn.style.cursor  = ready ? 'pointer' : 'not-allowed';
+}
 
-function submitPipeline() {
-  const missing = PIPELINE_FILES.filter(f => f.required && !fileInputs[f.key]);
-  if (missing.length) {
-    alert('Please upload: ' + missing.map(f => f.label).join(', '));
-    return;
-  }
-  // Block if any uploaded file failed column validation
-  const invalid = PIPELINE_FILES.filter(f => {
-    const errEl = document.getElementById(`fp-err-${f.key}`);
-    return errEl && errEl.textContent.trim() !== '';
-  });
-  if (invalid.length) {
-    alert('Fix file errors before running:\n' + invalid.map(f => '• ' + f.label).join('\n'));
-    return;
-  }
-
+async function submitPipeline() {
+  if (!fileStore['loan']) return;
   closePipelineModal();
-  document.getElementById('progress-overlay').classList.add('open');
-  document.getElementById('prog-msg').textContent = 'Uploading files…';
-  setStep('inference');
+
+  const overlay = document.getElementById('progress-overlay');
+  overlay.classList.add('open');
+  setStep(null);
 
   const fd = new FormData();
-  PIPELINE_FILES.forEach(f => { if (fileInputs[f.key]) fd.append(f.key, fileInputs[f.key]); });
+  FILE_DEFS.forEach(d => { if (fileStore[d.key]) fd.append(d.key, fileStore[d.key]); });
 
-  fetch('/api/upload', { method: 'POST', body: fd })
-    .then(r => r.json())
-    .then(({ job_id, error }) => {
-      if (error) throw new Error(error);
-      _pollTimer = setInterval(() => pollStatus(job_id), 2000);
-    })
-    .catch(err => {
-      document.getElementById('prog-msg').textContent = 'Upload failed: ' + err.message;
-      setStep('error');
-    });
-}
+  let jobId;
+  try {
+    const res  = await fetch('/api/upload', { method:'POST', body:fd });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Server error');
+    jobId = json.job_id;
+  } catch(err) {
+    overlay.classList.remove('open');
+    alert('Pipeline failed to start: ' + err.message);
+    return;
+  }
 
-function pollStatus(job_id) {
-  fetch(`/api/status/${job_id}`)
-    .then(r => r.json())
-    .then(({ stage, progress, done, error, accounts }) => {
-      document.getElementById('prog-msg').textContent = progress || stage;
-      setStep(stage);
-      if (done) {
-        clearInterval(_pollTimer);
-        if (error) {
-          document.getElementById('prog-msg').textContent = 'Error: ' + error;
-          setStep('error');
-          setTimeout(() => document.getElementById('progress-overlay').classList.remove('open'), 4000);
+  // Poll job status
+  const poll = setInterval(async () => {
+    try {
+      const res  = await fetch('/api/status/' + jobId);
+      const json = await res.json();
+      document.getElementById('prog-msg').textContent = json.progress || '…';
+
+      if (json.stage === 'inference')   setStep('ps-inference');
+      if (json.stage === 'validation')  setStep('ps-validation');
+      if (json.stage === 'survival')    setStep('ps-survival');
+
+      if (json.done) {
+        clearInterval(poll);
+        setStep('ps-done');
+        if (json.stage === 'error') {
+          setTimeout(() => {
+            overlay.classList.remove('open');
+            alert('Pipeline error: ' + (json.error || 'unknown'));
+          }, 800);
         } else {
-          loadPipelineResults(job_id, accounts);
+          setTimeout(async () => {
+            // Reload predictions CSV
+            const csv = await fetch('/api/predictions/' + jobId).then(r => r.text());
+            loadCSVText(csv, 'Pipeline · ' + new Date().toLocaleString());
+            // Reload validation JSON
+            try {
+              const val = await fetch('/api/validation/' + jobId).then(r => r.json());
+              validationData = val;
+            } catch {}
+            overlay.classList.remove('open');
+          }, 800);
         }
       }
-    });
+    } catch {}
+  }, 1500);
 }
 
-function loadPipelineResults(job_id, accounts) {
-  document.getElementById('prog-msg').textContent = 'Loading results into dashboard…';
+function setStep(activeId) {
+  ['ps-inference','ps-validation','ps-survival','ps-done'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('active','done');
+    if (id === activeId) el.classList.add('active');
+    else if (activeId && ['ps-inference','ps-validation','ps-survival','ps-done'].indexOf(id) <
+                         ['ps-inference','ps-validation','ps-survival','ps-done'].indexOf(activeId))
+      el.classList.add('done');
+  });
+  const bar = document.getElementById('prog-bar');
+  if (bar) {
+    const steps = ['ps-inference','ps-validation','ps-survival','ps-done'];
+    const idx = steps.indexOf(activeId);
+    bar.style.width = (idx < 0 ? 5 : (idx + 1) * 25) + '%';
+  }
+}
 
-  const loadPred = fetch(`/api/predictions/${job_id}`)
-    .then(r => r.text())
-    .then(csv => {
-      Papa.parse(csv, {
-        header: true, skipEmptyLines: true, dynamicTyping: true,
-        complete(res) {
-          rawData = res.data;
-          document.getElementById('last-updated').textContent =
-            `Pipeline run — ${accounts?.toLocaleString() ?? res.data.length} accounts — ${new Date().toLocaleTimeString()}`;
-          renderAll(recalculate(rawData));
-        }
-      });
-    });
-
-  const loadVal = fetch(`/api/validation/${job_id}`)
-    .then(r => r.json())
-    .then(data => {
-      validationData = data;
-      renderValidation(data);
-    })
-    .catch(() => {});
-
-  const loadSurv = fetch(`/api/survival/${job_id}`)
-    .then(r => r.json())
-    .then(data => {
-      survivalData = data;
-      renderSurvival(data);
-    })
-    .catch(() => {});
-
-  Promise.all([loadPred, loadVal, loadSurv]).finally(() => {
-    document.getElementById('progress-overlay').classList.remove('open');
+function loadCSVText(txt, label) {
+  Papa.parse(txt, {
+    header:true, skipEmptyLines:true, dynamicTyping:true,
+    complete(res) {
+      if (!res.data.length) return;
+      rawData = res.data;
+      document.getElementById('last-updated').textContent = label || ('Updated ' + new Date().toLocaleString());
+      renderAll(recalculate(rawData));
+    }
   });
 }
 </script>
