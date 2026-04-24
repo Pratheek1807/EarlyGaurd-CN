@@ -188,7 +188,7 @@ def logrank_two_groups(t_A, e_A, t_B, e_B) -> dict:
         V   += (nA * nB * d * (n - d)) / (n ** 2 * (n - 1)) if n > 1 else 0.0
 
     if V <= 0:
-        return {"statistic": 0.0, "p_value": 1.0, "significant": False}
+        return {"statistic": 0.0, "p_value": 1.0, "p_value_fmt": "p = 1.0000", "significant": False}
 
     stat    = (O_A - E_A) ** 2 / V
     p_value = float(1.0 - chi2.cdf(stat, df=1))

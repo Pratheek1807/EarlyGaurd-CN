@@ -66,7 +66,10 @@ def last_n(df, date_col, n):
 # FEATURE EXTRACTORS  (same logic as feature_pipeline.py)
 # ============================================================
 
+_EMPTY = pd.DataFrame()
+
 def feat_payment_deterioration(pay_acc):
+    if len(pay_acc) == 0: return np.nan
     last3 = last_n(pay_acc, 'payment_month', 3)
     ratio_avg = last3['partial_payment_ratio'].fillna(0.0).mean()
     missed    = (last3['payment_status'] == 'Missed').sum()
@@ -74,6 +77,7 @@ def feat_payment_deterioration(pay_acc):
     return clamp((1.0-ratio_avg)*0.40 + clamp(missed/3.0)*0.35 + clamp(days_late/30.0)*0.25)
 
 def feat_financial_cushion_trend(bank_acc):
+    if len(bank_acc) == 0: return np.nan
     last6 = last_n(bank_acc, 'statement_month', 6)
     last3 = last6.tail(3)
     slope_norm    = clamp(-linear_slope(last6['net_monthly_surplus'].fillna(0).values)/10_000)
@@ -82,24 +86,26 @@ def feat_financial_cushion_trend(bank_acc):
     return clamp(slope_norm*0.45 + expense_stress*0.30 + near_zero*0.25)
 
 def feat_income_reliability(bank_acc, epfo_acc, emp):
+    if len(bank_acc) == 0 and len(epfo_acc) == 0: return np.nan
     last3_bank = last_n(bank_acc, 'statement_month', 3)
     last6_epfo = last_n(epfo_acc, 'epfo_pull_date', 6)
     if emp == 'Salaried':
-        delay_slope = linear_slope(last3_bank['salary_credit_delay_days'].fillna(0).values)
+        delay_slope = linear_slope(last3_bank['salary_credit_delay_days'].fillna(0).values) if len(last3_bank) else 0.0
         delay_norm  = clamp(delay_slope / 5.0)
-        zero_months = last6_epfo['zero_contribution_months_last_6m'].fillna(0).max()
+        zero_months = last6_epfo['zero_contribution_months_last_6m'].fillna(0).max() if len(last6_epfo) else 0
         zero_norm   = clamp(zero_months / 6.0)
-        job_change  = float(last6_epfo['job_change_detected'].fillna(False).any())
+        job_change  = float(last6_epfo['job_change_detected'].fillna(False).any()) if len(last6_epfo) else 0.0
         return clamp(delay_norm*0.40 + zero_norm*0.35 + job_change*0.25)
     else:
         gst_map  = {'Filed':0.0,'Late Filed':0.5,'Not Filed':1.0}
-        gst_stress = last6_epfo['gst_filing_status'].fillna('Not Filed').map(gst_map).fillna(1.0).mean()
+        gst_stress = last6_epfo['gst_filing_status'].fillna('Not Filed').map(gst_map).fillna(1.0).mean() if len(last6_epfo) else 1.0
         upi_map  = {'Stable':0.0,'Increasing':0.0,'Declining':1.0}
-        upi_stress = last3_bank['business_upi_inflow_trend'].fillna('Declining').map(upi_map).fillna(1.0).mean()
-        itr_stress = 0.0 if last6_epfo['itr_filed_flag'].fillna(False).any() else 1.0
+        upi_stress = last3_bank['business_upi_inflow_trend'].fillna('Declining').map(upi_map).fillna(1.0).mean() if len(last3_bank) else 1.0
+        itr_stress = 0.0 if (len(last6_epfo) and last6_epfo['itr_filed_flag'].fillna(False).any()) else 1.0
         return clamp(gst_stress*0.40 + upi_stress*0.35 + itr_stress*0.25)
 
 def feat_bureau_stress(bureau_acc):
+    if len(bureau_acc) == 0: return np.nan
     latest    = bureau_acc.sort_values('bureau_pull_date').iloc[-1]
     score_now = float(latest.get('credit_score_current',700) or 700)
     score_6m  = float(latest.get('credit_score_6m_ago', score_now) or score_now)
@@ -109,6 +115,7 @@ def feat_bureau_stress(bureau_acc):
     return clamp(drop_norm*0.40 + missed*0.35 + hard_30d*0.25)
 
 def feat_contact_avoidance(tele_acc):
+    if len(tele_acc) == 0: return np.nan
     last1 = last_n(tele_acc, 'contact_month', 1)
     resp  = float(last1['response_rate_30d'].fillna(0.0).mean())
     cons  = float(last1['consecutive_unanswered_count'].fillna(0).max())
@@ -116,12 +123,14 @@ def feat_contact_avoidance(tele_acc):
     return clamp((1.0-clamp(resp))*0.35 + clamp(cons/10.0)*0.35 + clamp(days/30.0)*0.30)
 
 def feat_debt_pressure(bank_acc, emi):
+    if len(bank_acc) == 0: return np.nan
     last3     = last_n(bank_acc, 'statement_month', 3)
     income    = float(last3['total_monthly_inflow'].fillna(0).iloc[-1] if len(last3)>0 else 1.0)
     emi_other = float(last3['emi_outflow_other_lenders'].fillna(0).mean())
     return clamp(safe_div(emi+emi_other, income, 2.0), 0.0, 2.0)
 
 def feat_ptp_reliability(tele_acc):
+    if len(tele_acc) == 0: return np.nan
     last6 = last_n(tele_acc, 'contact_month', 6)
     last3 = last_n(tele_acc, 'contact_month', 3)
     if last6['ptp_made'].fillna(False).any():
@@ -131,6 +140,7 @@ def feat_ptp_reliability(tele_acc):
     return 0.30
 
 def feat_sentiment_distress(tele_acc):
+    if len(tele_acc) == 0: return np.nan
     EMOTION = {'Cooperative':0.0,'Avoidant':0.4,'Frustrated':0.6,
                 'Distressed':0.7,'Hostile':0.8,'Resigned':0.9}
     last1 = last_n(tele_acc, 'contact_month', 1)
@@ -142,19 +152,22 @@ def feat_sentiment_distress(tele_acc):
     return clamp((1.0-clamp(sent))*0.35 + emo*0.30 + hard*0.20 + slope*0.15)
 
 def feat_recency_weighted_stress(pay_acc):
+    if len(pay_acc) == 0: return np.nan
     last6   = last_n(pay_acc, 'payment_month', 6)
     ratios  = last6['partial_payment_ratio'].fillna(0.0).values
     WEIGHTS = [0.05,0.08,0.12,0.17,0.25,0.33]
     n = len(ratios)
-    if n == 0: return 0.5
+    if n == 0: return np.nan
     w = WEIGHTS[-n:]
     w = [wi/sum(w) for wi in w]
     return clamp(sum((1.0-r)*wi for r,wi in zip(ratios, w)))
 
 def feat_employment_event_recency(epfo_acc, bank_acc, emp):
+    if len(epfo_acc) == 0 and len(bank_acc) == 0: return np.nan
     last6_epfo = last_n(epfo_acc, 'epfo_pull_date', 6)
     last3_bank = last_n(bank_acc, 'statement_month', 3)
     if emp == 'Salaried':
+        if len(last6_epfo) == 0: return np.nan
         flags = last6_epfo['job_change_detected'].fillna(False).values
         if any(flags):
             months_since = int(np.argmax(flags[::-1]))
@@ -163,9 +176,10 @@ def feat_employment_event_recency(epfo_acc, bank_acc, emp):
         days  = float(last6_epfo['days_since_last_contribution'].fillna(0).max())
         return 0.70 if zero>=3 else (0.50 if days>60 else 0.0)
     else:
+        if len(last3_bank) == 0: return 0.5
         trend   = last3_bank['gst_turnover_trend'].fillna('Declining')
         n_dec   = int((trend=='Declining').sum())
-        itr_ok  = last6_epfo['itr_filed_flag'].fillna(False).any()
+        itr_ok  = last6_epfo['itr_filed_flag'].fillna(False).any() if len(last6_epfo) else False
         return 0.80 if n_dec>=2 else (0.50 if n_dec==1 else (0.40 if not itr_ok else 0.0))
 
 # ============================================================
@@ -326,22 +340,23 @@ def run_inference(loan_path, bank_path, bureau_path,
         emp = acc['employment_type']
         emi = acc['emi_amount']
 
-        if any(aid not in g for g in [bank_g,bureau_g,tele_g,epfo_g,pay_g]):
-            skipped += 1
-            continue
+        b  = bank_g.get(aid, _EMPTY)
+        bu = bureau_g.get(aid, _EMPTY)
+        tl = tele_g.get(aid, _EMPTY)
+        ep = epfo_g.get(aid, _EMPTY)
+        py = pay_g.get(aid, _EMPTY)
 
-        # Extract features
         feats = {
-            'payment_deterioration_score': feat_payment_deterioration(pay_g[aid]),
-            'financial_cushion_trend'    : feat_financial_cushion_trend(bank_g[aid]),
-            'income_reliability_score'   : feat_income_reliability(bank_g[aid], epfo_g[aid], emp),
-            'bureau_stress_score'        : feat_bureau_stress(bureau_g[aid]),
-            'contact_avoidance_score'    : feat_contact_avoidance(tele_g[aid]),
-            'debt_pressure_ratio'        : feat_debt_pressure(bank_g[aid], emi),
-            'ptp_reliability_score'      : feat_ptp_reliability(tele_g[aid]),
-            'sentiment_distress_signal'  : feat_sentiment_distress(tele_g[aid]),
-            'recency_weighted_stress'    : feat_recency_weighted_stress(pay_g[aid]),
-            'employment_event_recency'   : feat_employment_event_recency(epfo_g[aid], bank_g[aid], emp),
+            'payment_deterioration_score': feat_payment_deterioration(py),
+            'financial_cushion_trend'    : feat_financial_cushion_trend(b),
+            'income_reliability_score'   : feat_income_reliability(b, ep, emp),
+            'bureau_stress_score'        : feat_bureau_stress(bu),
+            'contact_avoidance_score'    : feat_contact_avoidance(tl),
+            'debt_pressure_ratio'        : feat_debt_pressure(b, emi),
+            'ptp_reliability_score'      : feat_ptp_reliability(tl),
+            'sentiment_distress_signal'  : feat_sentiment_distress(tl),
+            'recency_weighted_stress'    : feat_recency_weighted_stress(py),
+            'employment_event_recency'   : feat_employment_event_recency(ep, b, emp),
         }
         all_feats.append(feats)
         valid_accs.append(acc)
@@ -352,7 +367,21 @@ def run_inference(loan_path, bank_path, bureau_path,
 
     # ---- Batch Predict ----
     print("\nRunning model predictions in batch...")
-    X_batch = np.array([[f[c] for c in FEATURE_COLS] for f in all_feats])
+    X_batch = np.array([[f[c] for c in FEATURE_COLS] for f in all_feats], dtype=float)
+
+    # Impute NaN per feature: use column mean of accounts that have real data.
+    # If an entire column is NaN (file fully missing), fall back to 0.5.
+    col_means = np.nanmean(X_batch, axis=0)
+    col_means = np.where(np.isnan(col_means), 0.5, col_means)
+    nan_mask  = np.isnan(X_batch)
+    X_batch[nan_mask] = np.take(col_means, np.where(nan_mask)[1])
+
+    # Track which features were imputed so they appear in output
+    n_imputed = int(nan_mask.sum())
+    if n_imputed:
+        imputed_feats = [FEATURE_COLS[j] for j in range(len(FEATURE_COLS)) if nan_mask[:, j].any()]
+        print(f"  Imputed {n_imputed} missing values across: {', '.join(imputed_feats)}")
+
     lr30, rf30, xgb30, p30 = predict(art30, X_batch)
     lr60, rf60, xgb60, p60 = predict(art60, X_batch)
 
@@ -374,10 +403,11 @@ def run_inference(loan_path, bank_path, bureau_path,
         top_feat   = FEATURE_COLS[int(np.argmax(feat_arr))]
 
         # Intervention
-        tele_last = last_n(tele_g[aid],'contact_month',1)
-        sent_sig  = float(tele_last['sentiment_score_last_call'].fillna(0.5).mean())
-        hardship  = bool(tele_last['hardship_mentioned'].fillna(False).any())
-        best_hr   = int(tele_last['best_contact_hour'].fillna(10).iloc[0]) if len(tele_last)>0 else 10
+        tele_last = last_n(tele_g.get(aid, _EMPTY), 'contact_month', 1)
+        _has_tele = len(tele_last) > 0 and 'sentiment_score_last_call' in tele_last.columns
+        sent_sig  = float(tele_last['sentiment_score_last_call'].fillna(0.5).mean()) if _has_tele else 0.5
+        hardship  = bool(tele_last['hardship_mentioned'].fillna(False).any()) if _has_tele else False
+        best_hr   = int(tele_last['best_contact_hour'].fillna(10).iloc[0]) if _has_tele else 10
 
         if tier in ['High','Critical']:
             action = recommend_action(top_feat)
