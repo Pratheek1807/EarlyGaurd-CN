@@ -1,0 +1,55 @@
+{
+  "config": {
+    "title": "EarlyGuard — Cost-Benefit Analysis",
+    "currency": "INR",
+    "csv_source": "earlyguard_predictions.csv",
+    "last_updated": "auto"
+  },
+  "column_map": {
+    "account_id":        "account_id",
+    "prob_30d":          "prob_30d_ensemble",
+    "prob_60d":          "prob_60d_ensemble",
+    "risk_tier":         "risk_tier",
+    "risk_score":        "risk_score",
+    "outstanding":       "outstanding_balance_inr",
+    "intervention_cost": "intervention_cost_inr",
+    "recovery_cost":     "expected_recovery_cost_inr",
+    "net_benefit":       "net_benefit_inr",
+    "recommendation":    "recommended_action",
+    "loan_type":         "loan_type",
+    "dpd":               "current_dpd"
+  },
+  "thresholds": {
+    "risk_high":   0.65,
+    "risk_medium": 0.35,
+    "risk_low":    0.0,
+    "intervention_worthy": 0
+  },
+  "tier_labels": {
+    "HIGH":   { "label": "High Risk",   "color": "#E24B4A" },
+    "MEDIUM": { "label": "Medium Risk", "color": "#EF9F27" },
+    "LOW":    { "label": "Low Risk",    "color": "#639922" }
+  },
+  "kpi_definitions": {
+    "total_accounts":        "Total accounts scored",
+    "high_risk_count":       "Accounts flagged high risk",
+    "total_net_benefit":     "Total net benefit if all interventions actioned",
+    "avg_prob_30d":          "Portfolio avg 30-day delinquency probability",
+    "intervention_roi":      "Net benefit / total intervention cost",
+    "accounts_worth_acting": "Accounts where net_benefit_inr > 0"
+  },
+  "sample_record": {
+    "account_id": "AC000001",
+    "prob_30d_ensemble": 0.3098,
+    "prob_60d_ensemble": 0.1842,
+    "risk_tier": "MEDIUM",
+    "risk_score": 61.2,
+    "outstanding_balance_inr": 485000,
+    "intervention_cost_inr": 450,
+    "expected_recovery_cost_inr": 33479,
+    "net_benefit_inr": 33029,
+    "recommended_action": "CALL",
+    "loan_type": "Personal Loan",
+    "current_dpd": 0
+  }
+}
