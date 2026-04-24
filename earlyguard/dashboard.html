@@ -341,9 +341,11 @@ td.editable input {
   display: flex; align-items: center; gap: 7px; transition: border-color 0.15s;
 }
 .file-pick:hover { border-color: var(--accent); color: var(--text); }
-.file-pick.selected { border-color: rgba(34,197,94,0.5); color: #86EFAC; }
+.file-pick.selected { border-color: rgba(34,197,94,0.5); color: #14532D; }
+.file-pick.error   { border-color: rgba(220,38,38,0.6); color: #9B1C1C; }
 .file-pick input { display: none; }
 .file-pick svg { flex-shrink: 0; }
+.file-err { font-size: 10px; color: #9B1C1C; margin-top: 2px; line-height: 1.4; }
 .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
 /* ── Progress overlay ────────────────────────────────────────── */
@@ -2621,6 +2623,7 @@ function openPipelineModal() {
         <span id="fp-name-${f.key}">${f.hint}</span>
         <input type="file" accept=".csv" onchange="onFileSelect('${f.key}', this)">
       </label>
+      <span class="file-err" id="fp-err-${f.key}"></span>
     </div>`).join('');
   document.getElementById('pipeline-modal').classList.add('open');
 }
@@ -2629,14 +2632,62 @@ function closePipelineModal() {
   document.getElementById('pipeline-modal').classList.remove('open');
 }
 
+const FILE_SIGNATURES = {
+  loan:     ["loan_amount_inr","product_type","outstanding_balance_inr","emi_amount_inr","dpd_at_snapshot","loan_tenure_months","sanctioned_amount_inr"],
+  bank:     ["statement_month","net_monthly_surplus","total_monthly_inflow","expense_to_income_ratio","days_balance_near_zero","salary_credit_delay_days","emi_outflow_other_lenders","business_upi_inflow_trend"],
+  bureau:   ["bureau_pull_date","credit_score_current","credit_score_6m_ago","missed_payments_other_lenders_6m","hard_enquiries_30d"],
+  telecall: ["contact_month","response_rate_30d","consecutive_unanswered_count","sentiment_score_last_call","ptp_made","ptp_fulfillment_rate","hardship_mentioned","days_since_last_contact","ptp_broken_count_6m"],
+  epfo:     ["epfo_pull_date","zero_contribution_months_last_6m","job_change_detected","itr_filed_flag","gst_filing_status","days_since_last_contribution"],
+  payment:  ["payment_month","payment_due_date","emi_amount","payment_status","payment_amount","days_late","partial_payment_ratio","PAYMENT_DATE","PAYMENT_DUE_DATE","EMI_AMOUNT","PAYMENT_STATUS"],
+};
+const FILE_LABELS = { loan:"Loan Accounts", bank:"Bank Statement", bureau:"Bureau Data", telecall:"Telecall History", epfo:"EPFO Data", payment:"Payment History" };
+
+function _checkSignature(key, cols) {
+  const sig  = FILE_SIGNATURES[key];
+  const hits = sig.filter(c => cols.has(c)).length;
+  if (hits >= 2) return null;
+  // Wrong-file detection
+  let bestKey = null, bestHits = 0;
+  for (const [k, s] of Object.entries(FILE_SIGNATURES)) {
+    if (k === key) continue;
+    const h = s.filter(c => cols.has(c)).length;
+    if (h > bestHits) { bestHits = h; bestKey = k; }
+  }
+  const hint = (bestKey && bestHits >= 2) ? ` — looks like ${FILE_LABELS[bestKey]}` : '';
+  return `Wrong file for "${FILE_LABELS[key]}"${hint}. Expected: ${sig.slice(0,3).join(', ')}…`;
+}
+
 function onFileSelect(key, input) {
-  fileInputs[key] = input.files[0];
+  const file  = input.files[0];
   const label = document.getElementById(`fp-label-${key}`);
   const name  = document.getElementById(`fp-name-${key}`);
-  if (input.files[0]) {
-    label.classList.add('selected');
-    name.textContent = input.files[0].name;
-  }
+  const errEl = document.getElementById(`fp-err-${key}`);
+  if (!file) return;
+
+  name.textContent = file.name;
+  label.classList.remove('selected','error');
+  errEl.textContent = '';
+
+  Papa.parse(file, {
+    preview: 1,
+    complete(results) {
+      const cols = new Set((results.data[0] || []).map(c => c.trim()));
+      const err  = _checkSignature(key, cols);
+      if (err) {
+        label.classList.add('error');
+        errEl.textContent = err;
+        fileInputs[key] = null;
+      } else {
+        label.classList.add('selected');
+        fileInputs[key] = file;
+      }
+    },
+    error() {
+      label.classList.add('error');
+      errEl.textContent = 'Could not read file — is it a valid CSV?';
+      fileInputs[key] = null;
+    }
+  });
 }
 
 function setStep(stage) {
@@ -2660,6 +2711,15 @@ function submitPipeline() {
   const missing = PIPELINE_FILES.filter(f => f.required && !fileInputs[f.key]);
   if (missing.length) {
     alert('Please upload: ' + missing.map(f => f.label).join(', '));
+    return;
+  }
+  // Block if any uploaded file failed column validation
+  const invalid = PIPELINE_FILES.filter(f => {
+    const errEl = document.getElementById(`fp-err-${f.key}`);
+    return errEl && errEl.textContent.trim() !== '';
+  });
+  if (invalid.length) {
+    alert('Fix file errors before running:\n' + invalid.map(f => '• ' + f.label).join('\n'));
     return;
   }
 
