@@ -15,6 +15,82 @@ import os, sys, json, uuid, threading, tempfile, io
 from flask import Flask, request, jsonify, send_file, abort
 import pandas as pd
 
+# ── Column signatures — used to detect wrong-file uploads ─────────
+# Each entry: list of columns that uniquely fingerprint this file type.
+# An uploaded file must match at least 2 fingerprint columns, otherwise
+# it's treated as the wrong file.
+FILE_SIGNATURES = {
+    "loan": {
+        "label": "Loan Accounts",
+        "fingerprint": ["loan_amount_inr", "product_type", "outstanding_balance_inr",
+                        "emi_amount_inr", "dpd_at_snapshot", "loan_tenure_months",
+                        "sanctioned_amount_inr"],
+    },
+    "bank": {
+        "label": "Bank Statement",
+        "fingerprint": ["statement_month", "net_monthly_surplus", "total_monthly_inflow",
+                        "expense_to_income_ratio", "days_balance_near_zero",
+                        "salary_credit_delay_days", "emi_outflow_other_lenders",
+                        "business_upi_inflow_trend"],
+    },
+    "bureau": {
+        "label": "Bureau Data",
+        "fingerprint": ["bureau_pull_date", "credit_score_current", "credit_score_6m_ago",
+                        "missed_payments_other_lenders_6m", "hard_enquiries_30d"],
+    },
+    "telecall": {
+        "label": "Telecall History",
+        "fingerprint": ["contact_month", "response_rate_30d", "consecutive_unanswered_count",
+                        "sentiment_score_last_call", "ptp_made", "ptp_fulfillment_rate",
+                        "hardship_mentioned", "days_since_last_contact", "ptp_broken_count_6m"],
+    },
+    "epfo": {
+        "label": "EPFO Data",
+        "fingerprint": ["epfo_pull_date", "zero_contribution_months_last_6m",
+                        "job_change_detected", "itr_filed_flag", "gst_filing_status",
+                        "days_since_last_contribution"],
+    },
+    "payment": {
+        "label": "Payment History",
+        "fingerprint": ["payment_month", "payment_due_date", "emi_amount", "payment_status",
+                        "payment_amount", "days_late", "partial_payment_ratio",
+                        "PAYMENT_DATE", "PAYMENT_DUE_DATE", "EMI_AMOUNT", "PAYMENT_STATUS"],
+    },
+}
+MIN_FINGERPRINT_MATCHES = 2
+
+
+def _validate_csv_columns(path, key):
+    """Return an error string if the CSV at *path* doesn't match the expected
+    column signature for *key*, or None if validation passes."""
+    try:
+        cols = set(pd.read_csv(path, nrows=0).columns.str.strip())
+    except Exception as exc:
+        return f"Could not parse CSV: {exc}"
+
+    sig   = FILE_SIGNATURES[key]
+    hits  = sum(1 for c in sig["fingerprint"] if c in cols)
+    if hits < MIN_FINGERPRINT_MATCHES:
+        # Build a helpful hint: list the columns we expected but didn't find
+        missing = [c for c in sig["fingerprint"] if c not in cols][:5]
+        # Also check if this looks like another file type (wrong-file detection)
+        best_match, best_hits = None, 0
+        for other_key, other_sig in FILE_SIGNATURES.items():
+            if other_key == key:
+                continue
+            h = sum(1 for c in other_sig["fingerprint"] if c in cols)
+            if h > best_hits:
+                best_hits, best_match = h, other_key
+        hint = ""
+        if best_match and best_hits >= MIN_FINGERPRINT_MATCHES:
+            hint = f" (looks like a {FILE_SIGNATURES[best_match]['label']} file)"
+        return (
+            f"Wrong file uploaded for '{sig['label']}'{hint}. "
+            f"Expected columns like: {', '.join(sig['fingerprint'][:4])}… — "
+            f"got: {', '.join(sorted(cols)[:6])}…"
+        )
+    return None
+
 BASE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE)
 
@@ -121,6 +197,11 @@ def upload():
         dest = os.path.join(tmpdir, f"{key}.csv")
         if key in request.files and request.files[key].filename:
             request.files[key].save(dest)
+            # Validate column signature for every file actually uploaded
+            err = _validate_csv_columns(dest, key)
+            if err:
+                import shutil; shutil.rmtree(tmpdir, ignore_errors=True)
+                return jsonify({"error": err}), 400
         else:
             with open(dest, "w") as f:
                 f.write(EMPTY_SCHEMAS[key] + "\n")

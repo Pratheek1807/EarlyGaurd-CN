@@ -26,6 +26,46 @@ import warnings
 warnings.filterwarnings('ignore')
 import xgboost as xgb
 
+# ── Column signatures ─────────────────────────────────────────────
+_SIGNATURES = {
+    "loan":     ["loan_amount_inr", "product_type", "outstanding_balance_inr",
+                 "emi_amount_inr", "dpd_at_snapshot", "loan_tenure_months"],
+    "bank":     ["statement_month", "net_monthly_surplus", "total_monthly_inflow",
+                 "expense_to_income_ratio", "days_balance_near_zero",
+                 "salary_credit_delay_days", "emi_outflow_other_lenders"],
+    "bureau":   ["bureau_pull_date", "credit_score_current", "credit_score_6m_ago",
+                 "missed_payments_other_lenders_6m", "hard_enquiries_30d"],
+    "telecall": ["contact_month", "response_rate_30d", "consecutive_unanswered_count",
+                 "sentiment_score_last_call", "ptp_made", "hardship_mentioned"],
+    "epfo":     ["epfo_pull_date", "zero_contribution_months_last_6m",
+                 "job_change_detected", "itr_filed_flag", "gst_filing_status"],
+    "payment":  ["payment_month", "payment_due_date", "emi_amount", "payment_status",
+                 "payment_amount", "PAYMENT_DATE", "EMI_AMOUNT"],
+}
+_SIG_LABELS = {
+    "loan": "Loan Accounts", "bank": "Bank Statement", "bureau": "Bureau Data",
+    "telecall": "Telecall History", "epfo": "EPFO Data", "payment": "Payment History",
+}
+
+def _validate(path, key):
+    """Raise ValueError if the CSV at *path* doesn't look like the expected file type."""
+    cols = set(pd.read_csv(path, nrows=0).columns.str.strip())
+    hits = sum(1 for c in _SIGNATURES[key] if c in cols)
+    if hits < 2:
+        best, best_hits = None, 0
+        for k, sig in _SIGNATURES.items():
+            if k == key:
+                continue
+            h = sum(1 for c in sig if c in cols)
+            if h > best_hits:
+                best_hits, best = h, k
+        hint = f" (looks like a {_SIG_LABELS[best]} file)" if best and best_hits >= 2 else ""
+        raise ValueError(
+            f"Wrong file for '{_SIG_LABELS[key]}'{hint}. "
+            f"Expected columns like: {', '.join(_SIGNATURES[key][:4])}… — "
+            f"file has: {', '.join(sorted(cols)[:6])}…"
+        )
+
 # ============================================================
 # FEATURE COLUMN ORDER — must match training exactly
 # ============================================================
@@ -251,6 +291,17 @@ def run_inference(loan_path, bank_path, bureau_path,
     print("="*60)
     print("EARLYGUARD — INFERENCE PIPELINE")
     print("="*60)
+
+    # ---- Validate column signatures before loading ----
+    print("\nValidating CSV column signatures...")
+    for _key, _path in [("loan", loan_path), ("bank", bank_path), ("bureau", bureau_path),
+                        ("telecall", tele_path), ("epfo", epfo_path), ("payment", pay_path)]:
+        cols = set(pd.read_csv(_path, nrows=0).columns.str.strip())
+        # Skip empty stub files (only the header row, no data-specific columns yet)
+        if len(cols) <= 1:
+            continue
+        _validate(_path, _key)
+    print("  All files validated OK.")
 
     # ---- Load raw tables ----
     print("\nLoading raw CSV files...")
