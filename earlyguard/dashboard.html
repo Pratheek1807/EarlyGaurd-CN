@@ -383,10 +383,6 @@ td.editable input {
   </div>
   <div class="hdr-right">
     <span class="hdr-ts" id="last-updated">No data loaded</span>
-    <button class="btn" id="settings-toggle" onclick="toggleSettings()">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      Parameters
-    </button>
     <button class="btn btn-accent" onclick="openPipelineModal()">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
       Run Pipeline
@@ -529,6 +525,92 @@ td.editable input {
         <div style="font-size:10px;color:var(--muted);text-align:center">× <span id="roi-converted-inline">—</span> accounts = <strong id="roi-ops-saved" style="color:#14532D">—</strong> ops cost saved</div>
         <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:6px">+ <strong id="roi-portfolio" style="color:#1E3A8A">—</strong> portfolio protected</div>
       </div>
+    </div>
+  </div>
+
+  <!-- ── Loan Amount ROI Panel ── -->
+  <div class="card full-col" style="margin-bottom:12px;border-color:rgba(34,197,94,0.3)">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div class="card-title" style="margin-bottom:0"><span class="card-title-bar" style="background:#22C55E"></span>Loan Portfolio ROI — What Early Warning Actually Saves</div>
+      <div style="font-size:10px;color:var(--muted);background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.25);border-radius:6px;padding:4px 10px;line-height:1.5">
+        <strong style="color:#14532D">Illustrative assumptions (mock data):</strong> Standard loan amount ₹1,00,000/account · Without early warning 50% of flagged accounts default · With early warning 40% pay after contact and avoid collection
+      </div>
+    </div>
+    <!-- Story row -->
+    <div style="display:grid;grid-template-columns:1fr 40px 1fr 40px 1fr;gap:8px;align-items:center;margin-bottom:16px">
+
+      <!-- Without early warning -->
+      <div style="background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.25);border-radius:9px;padding:14px 16px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#9B1C1C;margin-bottom:10px">Without Early Warning</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:6px">
+          <span style="color:var(--muted)">Accounts flagged</span>
+          <span style="font-weight:700;color:var(--text)" id="loan-roi-flagged">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:6px">
+          <span style="color:var(--muted)">Assumed bad rate</span>
+          <span style="font-weight:700;color:#9B1C1C">50%</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:10px">
+          <span style="color:var(--muted)">Accounts going bad</span>
+          <span style="font-weight:700;color:#9B1C1C" id="loan-roi-bad">—</span>
+        </div>
+        <div style="border-top:1px solid rgba(239,68,68,0.2);padding-top:10px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Loan amount at risk</div>
+          <div style="font-size:22px;font-weight:800;color:#9B1C1C" id="loan-roi-atrisk">—</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">@ ₹1L standard per account</div>
+        </div>
+      </div>
+
+      <div style="text-align:center;font-size:26px;color:var(--muted)">→</div>
+
+      <!-- With early warning -->
+      <div style="background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.25);border-radius:9px;padding:14px 16px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#14532D;margin-bottom:10px">With Early Warning</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:6px">
+          <span style="color:var(--muted)">Accounts flagged</span>
+          <span style="font-weight:700;color:var(--text)" id="loan-roi-flagged2">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:6px">
+          <span style="color:var(--muted)">Response rate</span>
+          <span style="font-weight:700;color:#14532D">40%</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:10px">
+          <span style="color:var(--muted)">Accounts paid, avoided collection</span>
+          <span style="font-weight:700;color:#14532D" id="loan-roi-saved-count">—</span>
+        </div>
+        <div style="border-top:1px solid rgba(34,197,94,0.2);padding-top:10px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Loan amount protected</div>
+          <div style="font-size:22px;font-weight:800;color:#14532D" id="loan-roi-protected">—</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">not going into collection</div>
+        </div>
+      </div>
+
+      <div style="text-align:center;font-size:26px;color:#14532D">=</div>
+
+      <!-- ROI summary -->
+      <div style="background:rgba(34,197,94,0.10);border:2px solid rgba(34,197,94,0.35);border-radius:9px;padding:14px 16px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#14532D;margin-bottom:12px">Loan Portfolio ROI</div>
+        <div style="text-align:center;margin-bottom:10px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Loan amount saved by early action</div>
+          <div style="font-size:30px;font-weight:800;color:#14532D;line-height:1" id="loan-roi-saved-amount">—</div>
+        </div>
+        <div style="border-top:1px solid rgba(34,197,94,0.25);padding-top:10px;text-align:center">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px">ROI on loan amount at risk</div>
+          <div style="font-size:28px;font-weight:800;color:#14532D" id="loan-roi-pct">—</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px">of at-risk portfolio protected</div>
+        </div>
+        <div style="margin-top:10px;font-size:10px;color:var(--muted);background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.15);border-radius:6px;padding:6px 8px;line-height:1.5">
+          Some operational cost applies, shown separately in the Cost Model above.
+        </div>
+      </div>
+    </div>
+
+    <!-- Example walkthrough for 10 accounts -->
+    <div style="background:var(--s2);border:1px solid var(--border2);border-radius:8px;padding:12px 16px;font-size:11px;color:var(--muted);line-height:1.8">
+      <strong style="color:var(--text)">How to read this (10-account example):</strong>
+      &nbsp;10 accounts flagged as high-risk → without early warning, 5 would default (50%) → <span style="color:#9B1C1C;font-weight:600">₹5L lost</span>.
+      With early warning: 4 of the 10 respond and pay (40%) → those 4 do not go to collection → <span style="color:#14532D;font-weight:600">₹4L loan amount protected</span>.
+      Some ops cost (SMS + call ≈ ₹1.50/account) applies but is minimal vs. the loan amount saved.
     </div>
   </div>
 
@@ -1825,6 +1907,23 @@ function renderKPIs(data) {
   document.getElementById('roi-converted-inline').textContent = saved.toLocaleString();
   document.getElementById('roi-ops-saved').textContent     = fmtINR(opsSaved);
   document.getElementById('roi-portfolio').textContent     = fmtINR(portfolio);
+
+  // ── Loan Amount ROI ─────────────────────────────────────────────
+  const STANDARD_LOAN   = 100000;   // ₹1 lakh per account (mock standard)
+  const BASELINE_BAD    = 0.50;     // 50% would default without early warning
+  const badAccounts     = Math.round(flagged * BASELINE_BAD);
+  const atRiskAmount    = badAccounts * STANDARD_LOAN;
+  const savedAmount     = saved * STANDARD_LOAN;
+  const loanRoiPct      = atRiskAmount > 0 ? Math.round((savedAmount / atRiskAmount) * 100) : 0;
+
+  document.getElementById('loan-roi-flagged').textContent     = flagged.toLocaleString();
+  document.getElementById('loan-roi-flagged2').textContent    = flagged.toLocaleString();
+  document.getElementById('loan-roi-bad').textContent         = badAccounts.toLocaleString();
+  document.getElementById('loan-roi-atrisk').textContent      = fmtINR(atRiskAmount);
+  document.getElementById('loan-roi-saved-count').textContent = saved.toLocaleString();
+  document.getElementById('loan-roi-protected').textContent   = fmtINR(savedAmount);
+  document.getElementById('loan-roi-saved-amount').textContent= fmtINR(savedAmount);
+  document.getElementById('loan-roi-pct').textContent         = loanRoiPct + '%';
 }
 
 function renderCharts(data) {
