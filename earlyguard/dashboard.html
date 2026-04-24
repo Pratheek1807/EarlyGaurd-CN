@@ -266,6 +266,56 @@ td.editable input {
 
 @media (max-width: 1200px) { .kpi-grid { grid-template-columns: repeat(3,1fr); } }
 @media (max-width: 900px)  { .charts-row,.two-col { grid-template-columns: 1fr; } .settings-inner { grid-template-columns: 1fr; } .kpi-grid { grid-template-columns: repeat(2,1fr); } }
+
+/* ── Tab nav ─────────────────────────────────────────────────── */
+.tab-nav {
+  display: flex; align-items: center; gap: 2px;
+  padding: 0 28px; border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: sticky; top: 58px; z-index: 190;
+}
+.tab-btn {
+  font-family: var(--font); font-size: 12px; font-weight: 600;
+  cursor: pointer; padding: 13px 18px; border: none;
+  background: transparent; color: var(--muted);
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s; white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* ── Pass/Fail badge ─────────────────────────────────────────── */
+.pf-pass { display: inline-block; font-size: 10px; font-weight: 700;
+  padding: 2px 8px; border-radius: 5px;
+  background: rgba(34,197,94,0.12); color: #86EFAC;
+  border: 1px solid rgba(34,197,94,0.25); }
+.pf-fail { display: inline-block; font-size: 10px; font-weight: 700;
+  padding: 2px 8px; border-radius: 5px;
+  background: rgba(239,68,68,0.12); color: #FCA5A5;
+  border: 1px solid rgba(239,68,68,0.25); }
+
+/* ── Stat grid (validation KPIs) ─────────────────────────────── */
+.stat-grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 12px; }
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px 20px;
+  position: relative; overflow: hidden;
+}
+.stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; font-weight: 500; }
+.stat-val { font-size: 26px; font-weight: 800; letter-spacing: -0.6px; line-height: 1; margin-bottom: 6px; }
+.stat-sub { font-size: 11px; color: var(--muted); }
+
+/* ── Confusion matrix ────────────────────────────────────────── */
+.cm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; max-width: 240px; }
+.cm-cell { padding: 14px; border-radius: 7px; text-align: center; font-size: 11px; font-weight: 600; }
+.cm-tp { background: rgba(34,197,94,0.12); color: #86EFAC; border: 1px solid rgba(34,197,94,0.22); }
+.cm-fp { background: rgba(239,68,68,0.10); color: #FCA5A5; border: 1px solid rgba(239,68,68,0.22); }
+.cm-fn { background: rgba(249,115,22,0.10); color: #FDBA74; border: 1px solid rgba(249,115,22,0.22); }
+.cm-tn { background: rgba(59,130,246,0.08); color: #93C5FD; border: 1px solid rgba(59,130,246,0.18); }
+.cm-cell-val { font-size: 22px; font-weight: 800; display: block; margin-bottom: 4px; }
 </style>
 </head>
 <body>
@@ -288,12 +338,12 @@ td.editable input {
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       Load CSV
     </label>
-    <input type="file" id="csv-input" accept=".csv">
+    <in                                                             put type="file" id="csv-input" accept=".csv">
   </div>
 </header>
 
 <!-- Settings panel -->
-<div class="settings-panel" id="settings-panel">
+<div class="settings-panel" id="settings-panel" style="position:sticky;top:58px;z-index:195">
   <div class="settings-inner">
     <div class="sg">
       <div class="sg-label">Risk Thresholds (Combined Score)</div>
@@ -315,6 +365,13 @@ td.editable input {
   </div>
 </div>
 
+<nav class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('overview')">Overview</button>
+  <button class="tab-btn" onclick="switchTab('survival')">Survival Analysis</button>
+  <button class="tab-btn" onclick="switchTab('validation')">Model Validation</button>
+</nav>
+
+<div id="tab-overview" class="tab-pane active">
 <div class="main">
 
   <div class="kpi-grid">
@@ -403,7 +460,138 @@ td.editable input {
     </div>
   </div>
 
-</div>
+</div><!-- /.main -->
+</div><!-- /#tab-overview -->
+
+<!-- ═══════════════════════════════ SURVIVAL ANALYSIS ═══════════════════════════════ -->
+<div id="tab-survival" class="tab-pane">
+<div class="main">
+
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi" style="--kpi-c:#3B82F6">
+      <div class="kpi-label">Total Accounts</div>
+      <div class="kpi-value" id="sv-total">—</div>
+    </div>
+    <div class="kpi" style="--kpi-c:#EF4444">
+      <div class="kpi-label">Total Events</div>
+      <div class="kpi-value" id="sv-events" style="color:#FCA5A5">—</div>
+      <div class="kpi-sub" id="sv-event-rate"></div>
+    </div>
+    <div class="kpi" style="--kpi-c:#3B82F6">
+      <div class="kpi-label">Cox C-index</div>
+      <div class="kpi-value" id="sv-concordance">—</div>
+    </div>
+    <div class="kpi" style="--kpi-c:#22C55E">
+      <div class="kpi-label">Log-rank p-value</div>
+      <div class="kpi-value" id="sv-pvalue" style="font-size:16px">—</div>
+      <div class="kpi-sub" id="sv-sig"></div>
+    </div>
+  </div>
+
+  <div class="full-col card">
+    <div class="card-title"><span class="card-title-bar"></span>Kaplan-Meier Survival Curves by Risk Tier</div>
+    <div class="chart-wrap" style="height:280px"><canvas id="km-chart"></canvas></div>
+    <div class="legend" id="km-legend"></div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title"><span class="card-title-bar"></span>Tier Event Summary</div>
+      <table>
+        <thead><tr>
+          <th>Tier</th><th>N</th><th>Events</th><th>Default Rate</th><th>Median Survival</th>
+        </tr></thead>
+        <tbody id="sv-tier-tbody">
+          <tr><td colspan="5" class="empty">Loading survival data…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="card-title-bar"></span>Statistical Tests &amp; Cox PH Hazard Ratios</div>
+      <div id="sv-tests-content" style="color:var(--muted);font-size:12px">Loading…</div>
+    </div>
+  </div>
+
+  <div class="full-col card">
+    <div class="card-title"><span class="card-title-bar"></span>At-Risk Table</div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead id="at-risk-head"></thead>
+        <tbody id="at-risk-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /.main -->
+</div><!-- /#tab-survival -->
+
+<!-- ═══════════════════════════════ MODEL VALIDATION ════════════════════════════════ -->
+<div id="tab-validation" class="tab-pane">
+<div class="main">
+
+  <div class="stat-grid-3">
+    <div class="stat-card">
+      <div class="stat-label">30-Day AUC (Held-out 30%)</div>
+      <div class="stat-val" id="val-auc30">—</div>
+      <div class="stat-sub">Target ≥ 0.72 &nbsp;<span id="val-auc30-pf"></span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">60-Day AUC (Held-out 30%)</div>
+      <div class="stat-val" id="val-auc60">—</div>
+      <div class="stat-sub">Target ≥ 0.68 &nbsp;<span id="val-auc60-pf"></span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">False Positive Rate (High/Critical)</div>
+      <div class="stat-val" id="val-fpr">—</div>
+      <div class="stat-sub">Target ≤ 25% &nbsp;<span id="val-fpr-pf"></span></div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title"><span class="card-title-bar"></span>ROC Curves (Held-out Test Set)</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="roc-chart"></canvas></div>
+      <div class="legend" id="roc-legend"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="card-title-bar"></span>Confusion Matrix (High/Critical = Positive)</div>
+      <div style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap;margin-top:8px">
+        <div class="cm-grid">
+          <div class="cm-cell cm-tp"><span class="cm-cell-val" id="cm-tp">—</span>True Positive</div>
+          <div class="cm-cell cm-fp"><span class="cm-cell-val" id="cm-fp">—</span>False Positive</div>
+          <div class="cm-cell cm-fn"><span class="cm-cell-val" id="cm-fn">—</span>False Negative</div>
+          <div class="cm-cell cm-tn"><span class="cm-cell-val" id="cm-tn">—</span>True Negative</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:12px;margin-top:4px">
+          <div><span style="color:var(--muted);display:inline-block;width:90px">Precision</span><b id="val-precision">—</b></div>
+          <div><span style="color:var(--muted);display:inline-block;width:90px">Recall</span><b id="val-recall">—</b></div>
+          <div><span style="color:var(--muted);display:inline-block;width:90px">F1 Score</span><b id="val-f1">—</b></div>
+          <div><span style="color:var(--muted);display:inline-block;width:90px">FPR</span><b id="val-fpr2">—</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title"><span class="card-title-bar"></span>Tier Default Rates &amp; Lift</div>
+      <table>
+        <thead><tr>
+          <th>Tier</th><th>N</th><th>% Portfolio</th><th>Default Rate</th><th>Lift</th>
+        </tr></thead>
+        <tbody id="val-tier-tbody">
+          <tr><td colspan="5" class="empty">Loading validation data…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="card-title-bar"></span>Cost-Benefit Summary</div>
+      <div id="val-cb-content" style="color:var(--muted);font-size:12px">Loading…</div>
+    </div>
+  </div>
+
+</div><!-- /.main -->
+</div><!-- /#tab-validation -->
 
 <script>
 // ── Globals ────────────────────────────────────────────────────
@@ -568,7 +756,7 @@ function autoLoadCSV() {
     .catch(() => {});
 }
 
-document.addEventListener('DOMContentLoaded', () => { initAllSliders(); autoLoadCSV(); });
+document.addEventListener('DOMContentLoaded', () => { initAllSliders(); autoLoadCSV(); autoLoadSurvival(); autoLoadValidation(); });
 
 document.querySelectorAll('.settings-panel input[type=range]').forEach(inp => {
   inp.addEventListener('input', () => { if (rawData) renderAll(recalculate(rawData)); });
@@ -767,6 +955,247 @@ function renderScatter(data) {
       }
     }
   });
+}
+
+// ── Tab switching ─────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.tab-btn[onclick="switchTab('${name}')"]`).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  // Lazy-load JSON data when tabs are first opened
+  if (name === 'survival' && !survivalData) autoLoadSurvival();
+  if (name === 'validation' && !validationData) autoLoadValidation();
+  // Resize charts that were hidden during render
+  if (name === 'survival' && survivalData && !charts['km']) renderSurvival(survivalData);
+  if (name === 'validation' && validationData && !charts['roc']) renderValidation(validationData);
+}
+
+// ── Survival Analysis ──────────────────────────────────────────
+let survivalData = null;
+
+function autoLoadSurvival() {
+  fetch('survival_curves.json')
+    .then(r => { if (!r.ok) throw 0; return r.json(); })
+    .then(data => {
+      survivalData = data;
+      if (document.getElementById('tab-survival').classList.contains('active')) renderSurvival(data);
+    })
+    .catch(() => {});
+}
+
+function renderSurvival(d) {
+  document.getElementById('sv-total').textContent = d.total_accounts.toLocaleString();
+  document.getElementById('sv-events').textContent = d.total_events.toLocaleString();
+  document.getElementById('sv-event-rate').textContent = (d.total_events / d.total_accounts * 100).toFixed(1) + '% event rate';
+  document.getElementById('sv-concordance').textContent = d.cox_ph.concordance.toFixed(3);
+  document.getElementById('sv-pvalue').textContent = d.logrank.multivariate.p_value_fmt;
+  document.getElementById('sv-sig').textContent = d.logrank.multivariate.significant ? 'Significant (p < 0.05)' : 'Not significant';
+  renderKMChart(d);
+  renderSurvivalTierTable(d);
+  renderSurvivalTests(d);
+  renderAtRiskTable(d);
+}
+
+function renderKMChart(d) {
+  destroyChart('km');
+  const TIER_ORDER = ['Critical','High','Medium','Low'];
+  const datasets = TIER_ORDER.filter(t => d.curves[t]).map(t => {
+    const c = d.curves[t];
+    return {
+      label: t,
+      data: c.timeline.map((x, i) => ({ x, y: c.survival[i] })),
+      borderColor: c.color,
+      fill: false, stepped: 'before', borderWidth: 2.5, pointRadius: 0, tension: 0,
+    };
+  });
+  charts['km'] = new Chart(document.getElementById('km-chart').getContext('2d'), {
+    type: 'line', data: { datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false, parsing: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor:'#1E2D42', borderColor:'rgba(255,255,255,0.1)', borderWidth:1,
+          callbacks: { label: c => ` ${c.dataset.label}: ${(c.parsed.y*100).toFixed(1)}% at day ${c.parsed.x.toFixed(0)}` } }
+      },
+      scales: {
+        x: { type:'linear', title:{display:true,text:'Days',color:'#7A8CA8',font:{size:11}},
+          grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#7A8CA8'}, min:0, max:95 },
+        y: { title:{display:true,text:'Survival Probability',color:'#7A8CA8',font:{size:11}},
+          grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#7A8CA8',callback:v=>(v*100).toFixed(0)+'%'}, min:0, max:1 }
+      }
+    }
+  });
+  document.getElementById('km-legend').innerHTML = TIER_ORDER.filter(t => d.curves[t]).map(t => {
+    const ts = d.tier_summary[t] || {};
+    return `<span><i style="background:${d.curves[t].color};border-radius:2px;width:18px;height:3px;display:inline-block;vertical-align:middle;margin-right:4px"></i>${t} (${(ts.events||0)}/${(ts.n||0)} events)</span>`;
+  }).join('');
+}
+
+function renderSurvivalTierTable(d) {
+  document.getElementById('sv-tier-tbody').innerHTML = ['Critical','High','Medium','Low']
+    .filter(t => d.tier_summary[t]).map(t => {
+      const ts = d.tier_summary[t];
+      const med = ts.median_days != null ? ts.median_days.toFixed(1) + 'd' : 'Not reached';
+      const tu = t.toUpperCase();
+      return `<tr>
+        <td><span class="badge ${tu}"><span class="bdot"></span>${tu}</span></td>
+        <td>${ts.n.toLocaleString()}</td>
+        <td>${ts.events.toLocaleString()}</td>
+        <td>${(ts.default_rate*100).toFixed(1)}%</td>
+        <td>${med}</td>
+      </tr>`;
+    }).join('');
+}
+
+function renderSurvivalTests(d) {
+  const lr = d.logrank, cox = d.cox_ph;
+  const topHRs = Object.entries(cox.hazard_ratios)
+    .sort((a,b) => Math.abs(b[1]-1) - Math.abs(a[1]-1)).slice(0, 5);
+  document.getElementById('sv-tests-content').innerHTML = `
+    <div style="margin-bottom:16px">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Log-rank Tests</div>
+      <div style="display:flex;flex-direction:column;gap:5px;font-size:12px">
+        ${[['Multivariate (all tiers)',lr.multivariate],['High vs Low',lr.high_vs_low],['Critical vs Low',lr.critical_vs_low]]
+          .map(([label,res]) => `<div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--s2);border-radius:6px">
+            <span style="color:var(--muted)">${label}</span>
+            <span>${res.p_value_fmt} ${res.significant ? '<span class="pf-pass">SIG</span>' : ''}</span>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div>
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Top Hazard Ratios (Cox PH · C=${cox.concordance.toFixed(3)})</div>
+      <div style="display:flex;flex-direction:column;gap:4px;font-size:11.5px">
+        ${topHRs.map(([f,hr]) => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 10px;background:var(--s2);border-radius:5px">
+            <span style="color:var(--muted)">${f.replace(/_score|_ratio|_signal|_trend/g,'').replace(/_/g,' ')}</span>
+            <span style="font-weight:700;color:${hr>1?'#FCA5A5':'#86EFAC'}">HR ${hr.toFixed(3)}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function renderAtRiskTable(d) {
+  const tiers = ['Critical','High','Medium','Low'].filter(t => d.at_risk_table[t]);
+  const cps = d.checkpoints;
+  document.getElementById('at-risk-head').innerHTML = `<tr><th>Tier</th>${cps.map(c=>`<th>Day ${c}</th>`).join('')}</tr>`;
+  document.getElementById('at-risk-body').innerHTML = tiers.map(t => {
+    const row = d.at_risk_table[t], tu = t.toUpperCase();
+    return `<tr>
+      <td><span class="badge ${tu}"><span class="bdot"></span>${tu}</span></td>
+      ${cps.map(c=>`<td>${(row[String(c)]??'—').toLocaleString()}</td>`).join('')}
+    </tr>`;
+  }).join('');
+}
+
+// ── Model Validation ───────────────────────────────────────────
+let validationData = null;
+
+function autoLoadValidation() {
+  fetch('validation_metrics.json')
+    .then(r => { if (!r.ok) throw 0; return r.json(); })
+    .then(data => {
+      validationData = data;
+      if (document.getElementById('tab-validation').classList.contains('active')) renderValidation(data);
+    })
+    .catch(() => {});
+}
+
+function renderValidation(d) {
+  const hv = d.held_out_validation, tm = d.tier_metrics, cb = d.cost_benefit;
+  document.getElementById('val-auc30').textContent  = hv.auc_30d.toFixed(4);
+  document.getElementById('val-auc30-pf').innerHTML = hv.auc_30d_passes ? '<span class="pf-pass">PASS</span>' : '<span class="pf-fail">FAIL</span>';
+  document.getElementById('val-auc60').textContent  = hv.auc_60d.toFixed(4);
+  document.getElementById('val-auc60-pf').innerHTML = hv.auc_60d_passes ? '<span class="pf-pass">PASS</span>' : '<span class="pf-fail">FAIL</span>';
+  document.getElementById('val-fpr').textContent    = (tm.fpr*100).toFixed(1) + '%';
+  document.getElementById('val-fpr-pf').innerHTML   = tm.fpr_passes ? '<span class="pf-pass">PASS</span>' : '<span class="pf-fail">FAIL</span>';
+  const cm = tm.confusion_matrix;
+  document.getElementById('cm-tp').textContent = cm.TP.toLocaleString();
+  document.getElementById('cm-fp').textContent = cm.FP.toLocaleString();
+  document.getElementById('cm-fn').textContent = cm.FN.toLocaleString();
+  document.getElementById('cm-tn').textContent = cm.TN.toLocaleString();
+  document.getElementById('val-precision').textContent = (tm.precision*100).toFixed(1)+'%';
+  document.getElementById('val-recall').textContent    = (tm.recall*100).toFixed(1)+'%';
+  document.getElementById('val-f1').textContent        = (tm.f1*100).toFixed(1)+'%';
+  document.getElementById('val-fpr2').textContent      = (tm.fpr*100).toFixed(1)+'%';
+  renderROCChart(hv);
+  renderValTierTable(tm);
+  renderCostBenefit(cb);
+}
+
+function renderROCChart(hv) {
+  destroyChart('roc');
+  charts['roc'] = new Chart(document.getElementById('roc-chart').getContext('2d'), {
+    type: 'line',
+    data: { datasets: [
+      { label:`30d AUC=${hv.auc_30d.toFixed(4)}`,
+        data: hv.roc_30d.fpr.map((x,i)=>({x,y:hv.roc_30d.tpr[i]})),
+        borderColor:'#60A5FA', backgroundColor:'rgba(96,165,250,0.06)', fill:true, borderWidth:2, pointRadius:0, tension:0 },
+      { label:`60d AUC=${hv.auc_60d.toFixed(4)}`,
+        data: hv.roc_60d.fpr.map((x,i)=>({x,y:hv.roc_60d.tpr[i]})),
+        borderColor:'#F97316', fill:false, borderWidth:2, pointRadius:0, tension:0 },
+      { label:'Random', data:[{x:0,y:0},{x:1,y:1}],
+        borderColor:'rgba(255,255,255,0.15)', borderDash:[4,4], fill:false, borderWidth:1, pointRadius:0 }
+    ]},
+    options: {
+      responsive:true, maintainAspectRatio:false, parsing:false,
+      plugins: { legend:{display:false}, tooltip:{backgroundColor:'#1E2D42',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,
+        callbacks:{label:c=>` TPR: ${(c.parsed.y*100).toFixed(1)}% | FPR: ${(c.parsed.x*100).toFixed(1)}%`}} },
+      scales: {
+        x:{type:'linear',title:{display:true,text:'False Positive Rate',color:'#7A8CA8',font:{size:11}},
+          grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7A8CA8',callback:v=>(v*100).toFixed(0)+'%'},min:0,max:1},
+        y:{title:{display:true,text:'True Positive Rate',color:'#7A8CA8',font:{size:11}},
+          grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7A8CA8',callback:v=>(v*100).toFixed(0)+'%'},min:0,max:1}
+      }
+    }
+  });
+  document.getElementById('roc-legend').innerHTML = [
+    ['#60A5FA',`30d  AUC = ${hv.auc_30d.toFixed(4)}`],
+    ['#F97316',`60d  AUC = ${hv.auc_60d.toFixed(4)}`],
+    ['rgba(255,255,255,0.3)','Random baseline'],
+  ].map(([c,l])=>`<span><i style="background:${c};border-radius:2px"></i>${l}</span>`).join('');
+}
+
+function renderValTierTable(tm) {
+  document.getElementById('val-tier-tbody').innerHTML = ['Critical','High','Medium','Low']
+    .filter(t => tm.tier_default_rates[t]).map(t => {
+      const td = tm.tier_default_rates[t], tu = t.toUpperCase();
+      const liftColor = td.lift>=2?'#86EFAC':td.lift>=1.5?'#FDE047':'#FCA5A5';
+      return `<tr>
+        <td><span class="badge ${tu}"><span class="bdot"></span>${tu}</span></td>
+        <td>${td.n.toLocaleString()}</td>
+        <td>${td.pct_portfolio.toFixed(1)}%</td>
+        <td>${(td.default_rate*100).toFixed(1)}%</td>
+        <td><span style="color:${liftColor};font-weight:700">${td.lift.toFixed(2)}x</span></td>
+      </tr>`;
+    }).join('');
+}
+
+function renderCostBenefit(cb) {
+  const nbColor = cb.total_net_benefit_inr >= 0 ? '#86EFAC' : '#FCA5A5';
+  const nbBg    = cb.total_net_benefit_inr >= 0 ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)';
+  const nbBord  = cb.total_net_benefit_inr >= 0 ? 'rgba(34,197,94,0.20)' : 'rgba(239,68,68,0.20)';
+  document.getElementById('val-cb-content').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:5px;font-size:12px">
+      ${[
+        ['Portfolio accounts',     cb.portfolio_accounts.toLocaleString(), null],
+        ['Intervention candidates',cb.intervention_candidates.toLocaleString(), null],
+        ['Total intervention cost',fmtINR(cb.total_intervention_cost_inr), null],
+        ['Total expected recovery',fmtINR(cb.total_expected_recovery_inr), null],
+      ].map(([l,v,_])=>`<div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--s2);border-radius:6px"><span style="color:var(--muted)">${l}</span><b>${v}</b></div>`).join('')}
+      <div style="display:flex;justify-content:space-between;padding:7px 10px;background:${nbBg};border-radius:6px;border:1px solid ${nbBord}">
+        <span style="color:var(--muted)">Net benefit</span>
+        <b style="color:${nbColor}">${fmtINR(cb.total_net_benefit_inr)}</b>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--s2);border-radius:6px">
+        <span style="color:var(--muted)">Portfolio ROI</span>
+        <b style="color:#86EFAC">${cb.portfolio_roi_pct.toFixed(1)}%</b>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--s2);border-radius:6px">
+        <span style="color:var(--muted)">Accounts justified (net > 0)</span>
+        <b>${cb.accounts_justified.toLocaleString()}</b>
+      </div>
+    </div>`;
 }
 
 // ── Table ──────────────────────────────────────────────────────

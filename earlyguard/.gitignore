@@ -1,0 +1,5 @@
+# Runtime logs and output captures
+inference_out.txt
+inference_err.txt
+survival_run.log
+validation_run.log
